@@ -1,11 +1,11 @@
 import numpy as np
-import os
+import os, subprocess, time
 import vtk
 import matplotlib.pyplot as plt
 from vtk.util.numpy_support import vtk_to_numpy
 from vtk.numpy_interface import dataset_adapter as dsa
 from IPython.display import HTML,display
-from ipywidgets import widgets,interact_manual
+from ipywidgets import widgets,interact_manual,FloatProgress
 from matplotlib.animation import FuncAnimation
 from matplotlib.offsetbox import AnchoredText
 import linecache
@@ -24,7 +24,8 @@ class ActiveFluidParameters:
     dt=1e-2
     wrat=1
     Vtol=1e-2
-    ttol=1e-3
+    absttol=1e-3
+    relttol=1e-3
 def RunActiveFluidSimulation(Params,nCores=1):
     data=np.array([Params.Gd_Sz,
                    Params.Ks,
@@ -39,7 +40,8 @@ def RunActiveFluidSimulation(Params,nCores=1):
                    Params.dt,
                    Params.wrat,
                    Params.Vtol,
-                   Params.ttol,
+                   Params.absttol,
+                   Params.relttol
                    ])
     np.savetxt('bin/active2d.csv', data, delimiter=' ')
     os.popen('rm -r bin/Active2dOutput/* && mkdir -p bin/Active2dOutput')
@@ -47,7 +49,44 @@ def RunActiveFluidSimulation(Params,nCores=1):
     output = stream.readlines()
     print(output[-2])
     print(output[-1])
-    return int(output[-2].split()[-1])
+    return int(output[-1].split()[-1])
+def RunActiveFluidSimulationWithProgress(Params,nCores=1):
+    data=np.array([Params.Gd_Sz,
+                   Params.Ks,
+                   Params.Kb,
+                   Params.dmu,
+                   Params.nu,
+                   Params.zeta,
+                   Params.lamda,
+                   Params.eta,
+                   Params.gama,
+                   Params.tf,
+                   Params.dt,
+                   Params.wrat,
+                   Params.Vtol,
+                   Params.absttol,
+                   Params.relttol
+                   ])
+    np.savetxt('bin/active2d.csv', data, delimiter=' ')
+    os.popen('rm -rf bin/Active2dOutput/*')
+    time.sleep(1)
+    os.popen('mkdir -p bin/Active2dOutput')
+    p=subprocess.Popen('source ~/openfpm_vars && ../Active2d ../active2d.csv', stdout=subprocess.PIPE,cwd=os.getcwd()+'/bin/Active2dOutput',shell=True) 
+    time.sleep(1)
+    f = FloatProgress(value=0.0,min=0.0, max=Params.tf) # instantiate the bar
+    print("Simulation Progress (Based on current time value)")
+    display(f) # display the bar
+    ctr=0
+    for line in iter(p.stdout.readline, b''):
+        if(ctr>5):
+            outp=line.rstrip().decode('utf-8')
+            if(outp.split()[0]=="Total" or outp.split()[0]=="The"):
+                print(outp)
+            else:
+                f.value = float(line.rstrip().decode('utf-8'))
+        ctr+=1
+    print("Simulation finished (reached t="+str(Params.tf)+")")            
+    return int(outp.split()[-1])
     
 def getSimData(iteration):
     PropNames = ['00-Polarization', '01-Velocity', '02-Vorticity_0_0', '02-Vorticity_0_1', '02-Vorticity_1_0', '02-Vorticity_1_1', '03-ExternalForce', '04-Pressure', '05-StrainRate_0_0', '05-StrainRate_0_1', '05-StrainRate_1_0', '05-StrainRate_1_1', '06-Stress_0_0', '06-Stress_0_1', '06-Stress_1_0', '06-Stress_1_1', '07-MolecularField', '08-DPOL', '09-DV', '10-VRHS', '11-f1', '12-f2', '13-f3', '14-f4', '15-f5', '16-f6', '17-V_T', '18-DIV', '19-DELMU', '20-HPB', '21-FrankEnergy', '22-R', 'SubsetNumber', 'domain']
@@ -72,7 +111,7 @@ def VizualizeIteration(iteration=0):
     fig.colorbar(q1, cmap=plt.cm.jet,label='Frank Energy Density',ax=ax1)
     q2=ax2.quiver(x,y,Vel[:,0],Vel[:,1],np.linalg.norm(Vel,axis=1),cmap=plt.cm.viridis)
     fig.colorbar(q2, cmap=plt.cm.viridis,label='Velocity Magnitude',ax=ax2)
-    ax1.annotate('Time:'+str(t), xy=(-0.5, 10), xycoords='data', annotation_clip=False,size=15)
+    ax1.annotate('Time:'+str(round(t,2)), xy=(-0.5, 11), xycoords='data', annotation_clip=False,size=15)
     plt.show()
     return plt
 def VizualizeAnimate(Steps):
@@ -87,7 +126,7 @@ def VizualizeAnimate(Steps):
         x,y,Pol,Vel,FE,t=getSimData(i)
         q1.set_UVC(Pol[:,0],Pol[:,1],FE)
         q2.set_UVC(Vel[:,0],Vel[:,1],np.linalg.norm(Vel,axis=1))
-        anno.set_text('Time:'+str(t))
+        anno.set_text('Time:'+str(round(t,2)))
     anim = FuncAnimation(fig, animate,np.arange(1,Steps),interval=150)
     display(HTML(anim.to_html5_video()))
     plt.close()
