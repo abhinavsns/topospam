@@ -72,7 +72,6 @@ def RunActiveFluidSimulationWithProgress(Params,nCores=1):
     time.sleep(1)
     os.popen('mkdir -p bin/Active2dOutput')
     p=subprocess.Popen('source ~/openfpm_vars && ../Active2d ../active2d.csv', stdout=subprocess.PIPE,cwd=os.getcwd()+'/bin/Active2dOutput',shell=True) 
-    time.sleep(1)
     f = FloatProgress(value=0.0,min=0.0, max=Params.tf) # instantiate the bar
     print("Simulation Progress (Based on current time value)")
     display(f) # display the bar
@@ -110,8 +109,11 @@ def VizualizeIteration(iteration=0):
     q1=ax1.quiver(x,y,Pol[:,0],Pol[:,1],FE,cmap=plt.cm.jet)
     fig.colorbar(q1, cmap=plt.cm.jet,label='Frank Energy Density',ax=ax1)
     q2=ax2.quiver(x,y,Vel[:,0],Vel[:,1],np.linalg.norm(Vel,axis=1),cmap=plt.cm.viridis)
+    ax1.set_title("Polarity Vectors")
+    ax2.set_title("Velocity Vectors")
     fig.colorbar(q2, cmap=plt.cm.viridis,label='Velocity Magnitude',ax=ax2)
-    ax1.annotate('Time:'+str(round(t,2)), xy=(-0.5, 11), xycoords='data', annotation_clip=False,size=15)
+    fig.suptitle('Time:'+str(round(t,2)))
+    #ax1.annotate('Time:'+str(round(t,2)), xy=(-0.5, 11), xycoords='data', annotation_clip=False,size=15)
     plt.show()
     return plt
 def VizualizeAnimate(Steps):
@@ -119,14 +121,17 @@ def VizualizeAnimate(Steps):
     x,y,Pol,Vel,FE,t=getSimData(Steps)
     q1=ax1.quiver(x,y,Pol[:,0],Pol[:,1],FE,cmap=plt.cm.jet,width=0.005,headlength=4)
     q2=ax2.quiver(x,y,Vel[:,0],Vel[:,1],np.linalg.norm(Vel,axis=1),cmap=plt.cm.viridis,width=0.005,headlength=4)
+    ax1.set_title("Polarity Vectors")
+    ax2.set_title("Velocity Vectors")
     c1=fig.colorbar(q1, cmap=plt.cm.jet,label='Frank Energy Density',ax=ax1)
     c2=fig.colorbar(q2, cmap=plt.cm.viridis,label='Velocity Magnitude',ax=ax2)
-    anno=ax1.annotate('Time:'+str(t), xy=(-0.5, 10), xycoords='data', annotation_clip=False,size=15)
+    tittle=fig.suptitle("Time:"+str(round(t,2)))
+    #anno=ax1.annotate('Time:'+str(t), xy=(-0.5, 10), xycoords='data', annotation_clip=False,size=15)
     def animate(i):
         x,y,Pol,Vel,FE,t=getSimData(i)
         q1.set_UVC(Pol[:,0],Pol[:,1],FE)
         q2.set_UVC(Vel[:,0],Vel[:,1],np.linalg.norm(Vel,axis=1))
-        anno.set_text('Time:'+str(round(t,2)))
+        tittle.set_text("Time:"+str(round(t,2)))
     anim = FuncAnimation(fig, animate,np.arange(1,Steps),interval=150)
     display(HTML(anim.to_html5_video()))
     plt.close()
