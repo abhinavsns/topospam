@@ -299,8 +299,8 @@ struct PolarEv
         dPol_bulk[y] = ((h[x] * Pol[y] + h[y] * Pol[x]) / gama + lambda * delmu * Pol[y] -
                      nu * (u[y][x] * Pol[x] + u[y][y] * Pol[y]) + W[y][x] * Pol[x] +
                      W[y][y] * Pol[y]) - Pol[y]*div-(V[x]*Dx(Pol[y])+V[y]*Dy(Pol[y]));
-        dxdt.data.get<0>()=dPol[x];
-        dxdt.data.get<1>()=dPol[y];
+        dxdt.data.get<0>()=dPol[x]/sqrt(r);
+        dxdt.data.get<1>()=dPol[y]/sqrt(r);
     }
 };
 
@@ -328,7 +328,19 @@ struct CalcVelocity
     void operator() (state_type_2d_ofp &state, double t)
     {
         vector_type &Particles= *(vector_type *) vectorGlobal;
+        auto Pol = getV<POLARIZATION>(Particles);
+        auto r = getV<R>(Particles);
+        r = Pol[x] * Pol[x] + Pol[y] * Pol[y];
+        auto it2 = Particles.getDomainIterator();
+        while (it2.isNext()) {
+            auto p = it2.get();
+            Particles.getProp<R>(p) = (Particles.getProp<R>(p) == 0) ? 1 : Particles.getProp<R>(p);
+            ++it2;
+        }
+        state.data.get<0>()=state.data.get<0>()/sqrt(r);
+        state.data.get<1>()=state.data.get<1>()/sqrt(r);
         gt.stop();
+
         auto &v_cl=create_vcluster();
         if (v_cl.rank() == 0) {
             //std::cout << "Rel l2 cgs err in V = " << V_err << " and took " << tt.getwct() << " seconds with " << n        << " iterations."<< std::endl;

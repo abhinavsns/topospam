@@ -116,9 +116,9 @@ def VizualizeIteration(iteration=0):
     #ax1.annotate('Time:'+str(round(t,2)), xy=(-0.5, 11), xycoords='data', annotation_clip=False,size=15)
     plt.show()
     return plt
-def VizualizeAnimate(Steps):
+def VizualizeAnimate(finalStep,jump=1):
     fig,(ax1,ax2)=plt.subplots(1,2,figsize=(10, 4))
-    x,y,Pol,Vel,FE,t=getSimData(Steps)
+    x,y,Pol,Vel,FE,t=getSimData(finalStep)
     q1=ax1.quiver(x,y,Pol[:,0],Pol[:,1],FE,cmap=plt.cm.jet,width=0.005,headlength=4)
     q2=ax2.quiver(x,y,Vel[:,0],Vel[:,1],np.linalg.norm(Vel,axis=1),cmap=plt.cm.viridis,width=0.005,headlength=4)
     ax1.set_title("Polarity Vectors")
@@ -132,6 +132,6 @@ def VizualizeAnimate(Steps):
         q1.set_UVC(Pol[:,0],Pol[:,1],FE)
         q2.set_UVC(Vel[:,0],Vel[:,1],np.linalg.norm(Vel,axis=1))
         tittle.set_text("Time:"+str(round(t,2)))
-    anim = FuncAnimation(fig, animate,np.arange(1,Steps),interval=150)
+    anim = FuncAnimation(fig, animate,np.arange(1,finalStep,jump),interval=150)
     display(HTML(anim.to_html5_video()))
     plt.close()
