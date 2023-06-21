@@ -1,2 +1,5 @@
 .ipynb_checkpoints
 only_local
+*__pycache__
+*.egg-info
+.DS_STORE
