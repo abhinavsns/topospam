@@ -1,0 +1,6 @@
+-e .
+numpy
+vtk
+ipywidgets
+ipykernel
+matplotlib
