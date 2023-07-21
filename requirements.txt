@@ -4,3 +4,8 @@ vtk
 ipywidgets
 ipykernel
 matplotlib
+pandas
+networkx
+pickleshare
+pyvista
+scipy

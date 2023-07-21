@@ -13,4 +13,6 @@ source TopoSPAM_env/bin/activate
 TopoSPAM_env\Scripts\activate.bat
 #install all packages
 pip install -r requirements.txt
+#make environment available to jupyter
+python -m ipykernel install --user --name=TopoSPAM_env
 ```
