@@ -161,7 +161,7 @@ class SpringLatticeParameters:
     height_contribution = "no"
     genotype = "ecadGFPnbG4",#"fit_lambdas_df_ecadGFPnbG4.pkl", #fit_lambdas_df_ecadGFPnbG4myoVI.pk
     disc_name = 'isotropic_homogeneous'
-    lambda_anisotropic_coeffs = : [0, 1.1]
+    lambda_anisotropic_coeffs = [0, 1.1]
 def RunSpringLatticeSimulation(Params,nCores=1):
     data=np.array([Params.Gd_Sz,
                    Params.Ks,
