@@ -93,22 +93,16 @@ class SpringLatticeParameters:
         springs_df['l1_initial'] = springs_df['l1']
         self.springs = springs_df
 
-    def visualize(Params, mode = "continuous", fig = None, ax = None):
-
-        if ax == None:
-            fig,ax = plt.subplots(1,1,figsize = (10,10))
-        #draw the shape of the lattice
-        if Params.Geometry == "flat-square":
-            #draw a square of length Params.length and width Params.width
-            ax.plot([0,Params.length,Params.length,0,0],[0,0,Params.width,Params.width,0],color = "black")  
+    def visualize(Params, mode = "discrete"):
 
         if mode == "continuous":
             pass
             
         elif mode == "discrete":
-            pass
+            plot_shell(Params.balls, Params.springs, x='x', y='y', #filename=dirname + 'sim_output/top_view_init.pdf',
+                       cbar_name=r'$\frac{l_{rest}}{l_{init}}$', title='strain pattern', color_min=0.7, color_max=1.3, cmap="RdBu_r", norm="linear",)
 
-        return ax
+        #return ax
     
     @classmethod
     def helloworld(cls):
