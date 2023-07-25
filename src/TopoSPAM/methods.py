@@ -1009,9 +1009,10 @@ def plot_shell_on_given_ax(balls_df, springs_df, x = 'x', y = 'z', filename = No
                linewidth = 2, 
                xlim_min = None, xlim_max = None, ylim_min = None, ylim_max = None,
                plot_only_top = False,
-               ax = None, fig = None,
+               ax = None, fig = None, return_ax = False,
                show_cbar = True,
                line_color = "gray",
+               tick_fontsize = 15, label_fontsize = 30,
 
               ):
 
@@ -1085,9 +1086,9 @@ def plot_shell_on_given_ax(balls_df, springs_df, x = 'x', y = 'z', filename = No
             cbar_labels = [str(round(tick,2)) for tick in cbar_ticks]
         
         cbar = fig.colorbar(line, ax = ax, ticks=cbar_ticks)
-        cbar.ax.set_yticklabels(labels = cbar_labels, fontsize = 30)  # vertically oriented colorbar
+        cbar.ax.set_yticklabels(labels = cbar_labels, fontsize = tick_fontsize)  # vertically oriented colorbar
         if not(cbar_name is None):
-            cbar.ax.set_ylabel(cbar_name, rotation=0, fontsize = 40)
+            cbar.ax.set_ylabel(cbar_name, rotation=0, fontsize = label_fontsize)
 
     else:
         lc = LineCollection(segments_demo, color = line_color)
@@ -1106,6 +1107,9 @@ def plot_shell_on_given_ax(balls_df, springs_df, x = 'x', y = 'z', filename = No
     
     #if not(filename is None):
     #    plt.savefig(filename, bbox_inches = 'tight')
+
+    if return_ax:
+        return(fig,ax)
 
 def get_2D_curve_from_simulation(balls, springs, projection_x = 'x', projection_y = 'z',):
     

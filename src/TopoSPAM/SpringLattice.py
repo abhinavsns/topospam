@@ -129,14 +129,39 @@ class SpringLatticeParameters:
         self.balls[["x", "y", "z"]] = self.balls[["x", "y", "z"]] + np.abs(noise*np.random.randn(*self.balls[["x", "y", "z"]].shape))
         self.springs = update_springs(self.springs, self.balls[['x', 'y', 'z']])
 
-    def visualize(self, mode = "discrete", x = 'x', y = 'y'):
+    def visualize(self, ax = None, fig = None, mode = "discrete", x = 'x', y = 'y', 
+                  title = "Strain Pattern", color_min = 0.7, color_max = 1.3, state = "final", 
+                  tick_fontsize = 10, label_fontsize = 16, cbar_name=r'$\frac{l_{rest}}{l_{init}}$', title_fontsize = 20,
+                  xlim_min = -1.2, xlim_max = 1.2, ylim_min = -1.2, ylim_max = 1.2,
+                  ):
 
         if mode == "continuous":
             pass
-            
+
         elif mode == "discrete":
-            plot_shell(self.balls, self.springs, x=x, y=y, #filename=dirname + 'sim_output/top_view_init.pdf',
-                       cbar_name=r'$\frac{l_{rest}}{l_{init}}$', title='strain pattern', color_min=0.7, color_max=1.3, cmap="RdBu_r", norm="linear",)
+
+            balls_df = self.balls
+            springs_df = self.springs
+
+            if state == "initial":
+                balls_df[['x', 'y', 'z']] = self.init_positions.values
+            elif state == "final":
+                balls_df[['x', 'y', 'z']] = self.final_positions.values
+            springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
+
+
+            if ax is None:
+                plot_shell(balls_df, springs_df, x=x, y=y, #filename=dirname + 'sim_output/top_view_init.pdf',
+                        cbar_name=cbar_name, title=title, color_min=color_min, color_max=color_min, cmap="RdBu_r", norm="linear",)
+            else:
+                fig,ax = plot_shell_on_given_ax( balls_df, springs_df, x=x, y=y, ax = ax, fig = fig, 
+                                                xlim_min = xlim_min, xlim_max = xlim_max, ylim_min = ylim_min, ylim_max = ylim_max,
+                                       title = title, color_min=color_min, color_max=color_max, cmap="RdBu_r", return_ax=True, 
+                                       show_cbar=True, tick_fontsize=tick_fontsize, cbar_name=cbar_name, label_fontsize=label_fontsize,
+                )
+                #title
+                ax.set_title(title, fontsize=title_fontsize)
+                return fig,ax
 
         #return ax
 
