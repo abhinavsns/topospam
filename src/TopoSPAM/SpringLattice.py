@@ -36,6 +36,7 @@ class SpringLatticeParameters:
             springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
             self.balls = balls_df
             self.springs = springs_df
+            self.init_positions = balls_df[["x", "y", "z"]]
         else:
             pass
 
@@ -121,6 +122,15 @@ class SpringLatticeParameters:
         print('$$$$$$$ Running openfpm $$$$$$$')
         os.system("cd " + dirname + " && source ~/openfpm_vars && make && grid")
         print('$$$$ Exit OpenFPM $$$$')
+
+        #access the output files
+        final_balls_df = pd.read_csv(dirname + 'files/final_0_0.csv')
+        self.final_positions = pd.DataFrame(final_balls_df[['x[0]', 'x[1]', 'x[2]']].values, columns=['x', 'y', 'z'])
+        self.balls[['x', 'y', 'z']] = self.final_positions
+        self.springs = update_springs(self.springs, self.balls[['x', 'y', 'z']])
+
+        return(self) 
+
 
 
     
