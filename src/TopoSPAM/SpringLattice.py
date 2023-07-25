@@ -33,7 +33,7 @@ class SpringLatticeParameters:
             # offsetting the mesh so that it starts from y = 0
             balls_df["y"] = balls_df["y"] - balls_df["y"].min()
             #update springs
-            #springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
+            springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
             self.balls = balls_df
             self.springs = springs_df
         else:
@@ -93,16 +93,36 @@ class SpringLatticeParameters:
         springs_df['l1_initial'] = springs_df['l1']
         self.springs = springs_df
 
-    def visualize(Params, mode = "discrete"):
+    def visualize(self, mode = "discrete"):
 
         if mode == "continuous":
             pass
             
         elif mode == "discrete":
-            plot_shell(Params.balls, Params.springs, x='x', y='y', #filename=dirname + 'sim_output/top_view_init.pdf',
+            plot_shell(self.balls, self.springs, x='x', y='y', #filename=dirname + 'sim_output/top_view_init.pdf',
                        cbar_name=r'$\frac{l_{rest}}{l_{init}}$', title='strain pattern', color_min=0.7, color_max=1.3, cmap="RdBu_r", norm="linear",)
 
         #return ax
+
+    def RunSpringLatticeSimulation(self, dt = 0.01, tol = 1e-6, 
+                                   dirname = "../only_local/test_run/", bin_dir = "../bin/") :
+
+        os.makedirs(dirname, exist_ok=True)
+        os.makedirs(dirname+'runfiles/', exist_ok=True)
+        os.makedirs(dirname+'sim_output/', exist_ok=True)
+
+        [balls_df, springs_df] = initialize_cpp_simulation(
+            self.balls, self.springs, dt=dt, csv_t_save=1000, tol=tol, path=dirname)
+        
+        filelist = ['Makefile', 'main.cpp']
+        for file in filelist: shutil.copy(bin_dir + file, dirname)
+
+        # running the simulation
+        print('$$$$$$$ Running openfpm $$$$$$$')
+        os.system("cd " + dirname + " && source ~/openfpm_vars && make && grid")
+        print('$$$$ Exit OpenFPM $$$$')
+
+
     
     @classmethod
     def helloworld(cls):
