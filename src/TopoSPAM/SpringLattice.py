@@ -23,9 +23,10 @@ class SpringLatticeParameters:
     lambda_n_perp = 0.5 #some scalar function of x,y
     lambda_h = 1 #some scalar function of x,y
 
-    def load_mesh(self, thick_mesh_file = "../src/TopoSPAM/meshes/square_boundary.pkl"): #find a better way to refer to the mesh file
-        if self.mesh_geometry == "flat-square":
+    def load_mesh(self, thick_mesh_file = None): #find a better way to refer to the mesh file
 
+        if self.mesh_geometry == "square":
+            if thick_mesh_file is None: thick_mesh_file = "../src/TopoSPAM/meshes/square.pkl"
             #replace the line below to either create a mesh or read a mesh
             [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
             # setting thickness
@@ -34,30 +35,59 @@ class SpringLatticeParameters:
             balls_df["y"] = balls_df["y"] - balls_df["y"].min()
             #update springs
             springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
-            self.balls = balls_df
-            self.springs = springs_df
-            self.init_positions = balls_df[["x", "y", "z"]]
-        else:
-            pass
 
-    def load_strain_pattern(self, theta_o = 0.2, lambda1 = 1.25, lambda2 = 1.25**(-0.5), step_size = 0.1):
+        elif self.mesh_geometry == "circle":
+            if thick_mesh_file is None: thick_mesh_file = "../src/TopoSPAM/meshes/circle.pkl"
+            [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
+            # setting thickness
+            balls_df["z"][len(balls_df)//2:] = self.thickness
+            # if any of the balls have x = 0 then offset by small amount
+            ind = balls_df[balls_df["x"] == 0].index
+            balls_df.loc[ind, "x"] = 0.00001
+            #update springs
+            springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
+            #compute the polar coordinates of the balls
+            balls_df["r"] = np.sqrt(balls_df["x"]**2 + balls_df["y"]**2)
+            balls_df["theta"] = np.arctan2(balls_df["y"], balls_df["x"])
 
-        def get_lambda_tensor(pos_vector, theta_o=np.pi/4, step_size=0.01, lambda1=1.25, lambda2=1, lambda3=1):
+        self.balls = balls_df
+        self.springs = springs_df
+        self.init_positions = balls_df[["x", "y", "z"]]
+
+    def load_strain_pattern(self, theta_o = 0.2, lambda1 = 1.25, lambda2 = 1.25**(-0.5), lambda3=1, step_size = 0.1):
+
+        def get_lambda_tensor(pos_vector, theta_o=np.pi/4, step_size=0.01, lambda1=1.25, lambda2=1.25**(-0.5), lambda3=1,):
             """
             This function computes the director field for a given point in space
             and the magnitude of the lambda coefficient at that point
             """
             # compute theta
-            theta = theta_o if (pos_vector[1]//step_size) % 2 == 0 else np.pi-theta_o
-            # compute director1
-            director1 = np.array([np.cos(theta), np.sin(theta), 0])
-            # compute director2
-            director2 = np.array([-np.sin(theta), np.cos(theta), 0])
-            # compute director3
-            director3 = np.array([0, 0, 1])
-            #combine to form lambda tensor
-            lambda_tensor = lambda1*np.tensordot(director1, director1, axes=0) + lambda2*np.tensordot(
-                director2, director2, axes=0) + lambda3*np.tensordot(director3, director3, axes=0)
+            if self.nematic_coordinates == "zig-zag":
+                theta = theta_o if (pos_vector[1]//step_size) % 2 == 0 else np.pi-theta_o
+                director1 = np.array([np.cos(theta), np.sin(theta), 0])
+                director2 = np.array([-np.sin(theta), np.cos(theta), 0])
+                director3 = np.array([0, 0, 1])
+                lambda_tensor = lambda1*np.tensordot(director1, director1, axes=0) + lambda2*np.tensordot(
+                    director2, director2, axes=0) + lambda3*np.tensordot(director3, director3, axes=0)
+
+            elif self.nematic_coordinates == "polar":
+                theta = np.arctan2(pos_vector[1], pos_vector[0]) 
+                r = np.sqrt(pos_vector[0]**2 + pos_vector[1]**2)
+                director1 = np.array([pos_vector[0]/r, pos_vector[1]/r,0])
+                director2 = np.array([-pos_vector[1]/r, pos_vector[0]/r,0])
+                director3 = np.array([0, 0, 1])
+                lambda_tensor = lambda1(r)*np.tensordot(director1, director1, axes=0) \
+                + lambda2(r)*np.tensordot(director2, director2, axes=0) \
+                + lambda3(r)*np.tensordot(director3, director3, axes=0)
+            
+            elif self.nematic_coordinates == "cartesian":
+                director1 = [1,0,0]
+                director2 = [0,1,0]
+                director3 = [0,0,1]
+                [x,y,z] = pos_vector
+                lambda_tensor = lambda1(x,y)*np.tensordot(director1, director1, axes=0) \
+                + lambda2(x,y)*np.tensordot(director2, director2, axes=0) \
+                + lambda3(x,y)*np.tensordot(director3, director3, axes=0)
 
             return (lambda_tensor)
 
@@ -68,13 +98,13 @@ class SpringLatticeParameters:
             # get lambda tensor at one endpoint
             lambda_alpha = get_lambda_tensor(
                 balls_df.iloc[row["ball1"]][["x", "y", "z"]].values,
-                theta_o=theta_o, step_size=step_size, lambda1=lambda1, lambda2=lambda2,
+                theta_o=theta_o, step_size=step_size, lambda1=lambda1, lambda2=lambda2, lambda3 = lambda3, 
             )
             
             # get lambda tensor at other endpoint
             lambda_beta = get_lambda_tensor(
                 balls_df.iloc[row["ball2"]][["x", "y", "z"]].values,
-                theta_o=theta_o, step_size=step_size, lambda1=lambda1, lambda2=lambda2,
+                theta_o=theta_o, step_size=step_size, lambda1=lambda1, lambda2=lambda2, lambda3 = lambda3, 
             )
             # average the lambda tensors
             lambda_avg = (lambda_alpha + lambda_beta)/2
@@ -94,18 +124,23 @@ class SpringLatticeParameters:
         springs_df['l1_initial'] = springs_df['l1']
         self.springs = springs_df
 
-    def visualize(self, mode = "discrete"):
+    def add_noise(self, noise = 0.1):
+        # add noise to the initial positions
+        self.balls[["x", "y", "z"]] = self.balls[["x", "y", "z"]] + np.abs(noise*np.random.randn(*self.balls[["x", "y", "z"]].shape))
+        self.springs = update_springs(self.springs, self.balls[['x', 'y', 'z']])
+
+    def visualize(self, mode = "discrete", x = 'x', y = 'y'):
 
         if mode == "continuous":
             pass
             
         elif mode == "discrete":
-            plot_shell(self.balls, self.springs, x='x', y='y', #filename=dirname + 'sim_output/top_view_init.pdf',
+            plot_shell(self.balls, self.springs, x=x, y=y, #filename=dirname + 'sim_output/top_view_init.pdf',
                        cbar_name=r'$\frac{l_{rest}}{l_{init}}$', title='strain pattern', color_min=0.7, color_max=1.3, cmap="RdBu_r", norm="linear",)
 
         #return ax
 
-    def RunSpringLatticeSimulation(self, dt = 0.01, tol = 1e-6, 
+    def RunSpringLatticeSimulation(self, dt = 0.01, tol = 1e-6, csv_t_save = 500,
                                    dirname = "../only_local/test_run/", bin_dir = "../bin/") :
 
         os.makedirs(dirname, exist_ok=True)
@@ -113,7 +148,7 @@ class SpringLatticeParameters:
         os.makedirs(dirname+'sim_output/', exist_ok=True)
 
         [balls_df, springs_df] = initialize_cpp_simulation(
-            self.balls, self.springs, dt=dt, csv_t_save=1000, tol=tol, path=dirname)
+            self.balls, self.springs, dt=dt, csv_t_save=csv_t_save, tol=tol, path=dirname)
         
         filelist = ['Makefile', 'main.cpp']
         for file in filelist: shutil.copy(bin_dir + file, dirname)
