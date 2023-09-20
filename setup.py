@@ -1,9 +1,11 @@
 from setuptools import setup, Extension, find_packages, Command
+from setuptools.command.install import install
 import platform
 import subprocess
 import os
+import sys
 
-class InstallOpenFPM(Command):
+class InstallOpenFPM(install):
     user_options = []
 
     def initialize_options(self):
@@ -22,7 +24,7 @@ class InstallOpenFPM(Command):
                 print("Unsupported architecture")
                 sys.exit(1)
             subprocess.check_call(['wget', '-O', 'bin/software_mac.pkg', pkg_url])
-            subprocess.check_call(['installer', '-pkg', 'bin/software_mac.pkg', '-target', '/'])
+            subprocess.check_call(['sudo','installer', '-pkg', 'bin/software_mac.pkg', '-target', '/'])
         elif sys.platform == "linux":  # Linux (assuming Ubuntu for .deb)
             deb_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Linux-x86_64.deb"
         else:
@@ -45,13 +47,9 @@ setup(
     install_requires=[
         'numpy',
         'matplotlib',
-        'os',
-        'subprocess',
-        'time',
         'vtk',
         'IPython',
         'ipywidgets',
-        'linecache'
     ],
     author='Abhinav Singh',
     description='TopoSPAM',
@@ -62,5 +60,5 @@ setup(
         'Programming Language :: Python :: 3',
         'License :: GPL-3.0',
     ],
-    ext_modules=[cpp_module], # Include the C++ extension
+    ext_modules=[cpp_module],
 )
