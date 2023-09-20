@@ -6,13 +6,6 @@ import os
 import sys
 
 class InstallOpenFPM(install):
-    user_options = []
-
-    def initialize_options(self):
-        pass
-    def finalize_options(self):
-        pass
-
     def run(self):
         arch = platform.machine()
         if sys.platform == "darwin":  # macOS
@@ -30,6 +23,7 @@ class InstallOpenFPM(install):
         else:
             print("Unsupported platform")
             sys.exit(1)
+        install.run(self)
 
 
 # Define the C++ extension
