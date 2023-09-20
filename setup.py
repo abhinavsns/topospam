@@ -39,6 +39,9 @@ setup(
     name='TopoSPAM',
     version='0.1',
     packages=find_packages(),
+    cmdclass={
+        'install': InstallOpenFPM,
+    },
     install_requires=[
         'numpy',
         'matplotlib',
