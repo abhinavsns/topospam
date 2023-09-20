@@ -15,17 +15,16 @@ class InstallOpenFPM(Command):
         arch = platform.machine()
         if sys.platform == "darwin":  # macOS
             if arch == "arm64":
-                pkg_url = "https://cloud.mpi-cbg.de/index.php/s/0dHBEjKG17Pc3om/download"
+                pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-arm64.pkg"
             elif arch == "x86_64":
-                pkg_url = "https://cloud.mpi-cbg.de/index.php/s/0dHBEjKG17Pc3om/download"
+                pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-x86_64.pkg"
             else:
                 print("Unsupported architecture")
                 sys.exit(1)
-
             subprocess.check_call(['wget', '-O', 'bin/software_mac.pkg', pkg_url])
             subprocess.check_call(['installer', '-pkg', 'bin/software_mac.pkg', '-target', '/'])
         elif sys.platform == "linux":  # Linux (assuming Ubuntu for .deb)
-            deb_url = "https://example.com/path/to/x86/software_ubuntu_x86.deb"
+            deb_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Linux-x86_64.deb"
         else:
             print("Unsupported platform")
             sys.exit(1)
@@ -34,7 +33,7 @@ class InstallOpenFPM(Command):
 # Define the C++ extension
 cpp_module = Extension(
     'TopoSPAM.cpp_module',       # Name of the module to import in Python
-    sources=['src/Active2d.cpp'], # List of all C++ source files
+    sources=['bin/Active2d.cpp','bin/SpringLattice.cpp'], # List of all C++ source files
 )
 setup(
     name='TopoSPAM',
