@@ -8,7 +8,7 @@ OBJ = Active2d.o
 OBJ2= SpringLattice.o
 
 %.o: %.cpp
-	$(CC) -O3 -march=x86-64 -c --std=c++14 -o $@ $< $(INCLUDE_PATH)
+	$(CC) -O3 -march=native -c --std=c++14 -o $@ $< $(INCLUDE_PATH)
 
 Active2d: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS) $(LIBS_PATH) $(LIBS)

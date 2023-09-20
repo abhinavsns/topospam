@@ -25,7 +25,7 @@ class InstallOpenFPM(install):
             sys.exit(1)
 
         make_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin')
-        subprocess.check_call(['source /usr/local/openfpm/source/openfpm_vars && make all'], cwd=make_dir)
+        subprocess.check_call([f'source /usr/local/openfpm/source/openfpm_vars && make all'],shell=True,cwd=make_dir)
         install.run(self)
 
 
