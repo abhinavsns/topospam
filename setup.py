@@ -16,21 +16,19 @@ class InstallOpenFPM(install):
             else:
                 print("Unsupported architecture")
                 sys.exit(1)
-            subprocess.check_call(['wget', '-O', 'bin/software_mac.pkg', pkg_url])
-            subprocess.check_call(['sudo','installer', '-pkg', 'bin/software_mac.pkg', '-target', '/'])
+            subprocess.check_call(['wget', '-O', 'bin/openfpm.pkg', pkg_url])
+            subprocess.check_call(['sudo','installer', '-pkg', 'bin/openfpm.pkg', '-target', '/'])
         elif sys.platform == "linux":  # Linux (assuming Ubuntu for .deb)
             deb_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Linux-x86_64.deb"
         else:
             print("Unsupported platform")
             sys.exit(1)
+
+        make_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin')
+        subprocess.check_call(['make','all'], cwd=make_dir)
         install.run(self)
 
 
-# Define the C++ extension
-cpp_module = Extension(
-    'TopoSPAM.cpp_module',       # Name of the module to import in Python
-    sources=['bin/Active2d.cpp','bin/SpringLattice.cpp'], # List of all C++ source files
-)
 setup(
     name='TopoSPAM',
     version='0.1',
@@ -54,5 +52,4 @@ setup(
         'Programming Language :: Python :: 3',
         'License :: GPL-3.0',
     ],
-    ext_modules=[cpp_module],
 )
