@@ -9,6 +9,7 @@ class InstallOpenFPM(install):
     def run(self):
         arch = platform.machine()
         if sys.platform == "darwin":  # macOS
+            print("Please make sure command line tools or Xcode is installed on your system (xcode select --install).")
             if arch == "arm64":
                 pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-arm64.pkg"
             elif arch == "x86_64":
@@ -21,7 +22,7 @@ class InstallOpenFPM(install):
         elif sys.platform == "linux":  # Linux (assuming Ubuntu for .deb)
             deb_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Linux-x86_64.deb"
         else:
-            print("Unsupported platform")
+            print("Unsupported platform. We only support macOS and Linux.")
             sys.exit(1)
 
         make_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin')
@@ -42,6 +43,7 @@ setup(
         'vtk',
         'IPython',
         'ipywidgets',
+        'jupyter'
     ],
     author='Abhinav Singh',
     description='TopoSPAM',
