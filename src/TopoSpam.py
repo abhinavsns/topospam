@@ -71,7 +71,7 @@ def RunActiveFluidSimulationWithProgress(Params,nCores=1):
     os.popen('rm -rf bin/Active2dOutput/*')
     time.sleep(1)
     os.popen('mkdir -p bin/Active2dOutput')
-    p=subprocess.Popen('source ~/openfpm_vars && ../Active2d ../active2d.csv', stdout=subprocess.PIPE,cwd=os.getcwd()+'/bin/Active2dOutput',shell=True) 
+    p=subprocess.Popen('source  /usr/local/openfpm/source/openfpm_vars && ../Active2d ../active2d.csv', stdout=subprocess.PIPE,cwd=os.getcwd()+'/bin/Active2dOutput',shell=True)
     f = FloatProgress(value=0.0,min=0.0, max=Params.tf) # instantiate the bar
     print("Simulation Progress (Based on current time value)")
     display(f) # display the bar

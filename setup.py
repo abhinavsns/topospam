@@ -13,6 +13,7 @@ class InstallOpenFPM(install):
             if arch == "arm64":
                 pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-arm64.pkg"
             elif arch == "x86_64":
+                subprocess.check_call(['brew', 'install', 'gcc@12'])
                 pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-x86_64.pkg"
             else:
                 print("Unsupported architecture")

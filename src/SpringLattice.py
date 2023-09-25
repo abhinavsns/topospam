@@ -26,7 +26,7 @@ class SpringLatticeParameters:
     def load_mesh(self, thick_mesh_file = None): #find a better way to refer to the mesh file
 
         if self.mesh_geometry == "square":
-            if thick_mesh_file is None: thick_mesh_file = "../src/TopoSPAM/meshes/square.pkl"
+            if thick_mesh_file is None: thick_mesh_file = "../src/meshes/square.pkl"
             #replace the line below to either create a mesh or read a mesh
             [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
             # setting thickness
@@ -37,7 +37,7 @@ class SpringLatticeParameters:
             springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
 
         elif self.mesh_geometry == "circle":
-            if thick_mesh_file is None: thick_mesh_file = "../src/TopoSPAM/meshes/circle.pkl"
+            if thick_mesh_file is None: thick_mesh_file = "../src/meshes/circle.pkl"
             [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
             # setting thickness
             balls_df["z"][len(balls_df)//2:] = self.thickness
@@ -180,7 +180,7 @@ class SpringLatticeParameters:
 
         # running the simulation
         print('$$$$$$$ Running openfpm $$$$$$$')
-        os.system("cd " + dirname + " && source ~/openfpm_vars && make && grid")
+        os.system("cd " + dirname + " && /usr/local/openfpm/source/openfpm_vars && make && SpringLattice")
         print('$$$$ Exit OpenFPM $$$$')
 
         #access the output files
