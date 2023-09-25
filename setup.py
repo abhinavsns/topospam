@@ -43,7 +43,8 @@ class InstallOpenFPM(install):
 setup(
     name='TopoSPAM',
     version='0.1',
-    packages=find_packages(),
+    packages=find_packages(where='src'),
+    package_dir={'': 'src'},
     cmdclass={
         'install': InstallOpenFPM,
     },
