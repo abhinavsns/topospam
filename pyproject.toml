@@ -18,14 +18,14 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dynamic = ["dependencies"]
-dependencies = [
-    "numpy",
-    "matplotlib",
-    "vtk",
-    "IPython",
-    "ipywidgets",
-    "jupyter"
-]
+#dependencies = [
+#    "numpy",
+#    "matplotlib",
+#    "vtk",
+#    "IPython",
+#    "ipywidgets",
+#    "jupyter"
+#]
 
 [project.urls]
 "Homepage" = "https://github.com/abhinavsns/TopoSPAM"
