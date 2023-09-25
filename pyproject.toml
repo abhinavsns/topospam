@@ -17,6 +17,15 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dynamic = ["dependencies"]
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "vtk",
+    "IPython",
+    "ipywidgets",
+    "jupyter"
+]
 
 [project.urls]
 "Homepage" = "https://github.com/abhinavsns/TopoSPAM"
