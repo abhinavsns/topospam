@@ -54,7 +54,11 @@ setup(
         'vtk',
         'IPython',
         'ipywidgets',
-        'jupyter'
+        'jupyter',
+        'pandas',
+        'scipy',
+        'networkx',
+        'pyvista',
     ],
     author='Abhinav Singh',
     description='TopoSPAM',
