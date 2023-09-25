@@ -1,0 +1,69 @@
+#
+# This is an example runcard for the rotating organoids model.
+# You can modilfy the parameters as you wish and run the program as:
+# ./organoid organoid.dat
+
+# ================================   model and initial configuration =====================
+# ...size of each time step for dynamic simulations
+time_step    = 0.0002
+# ...number of time steps after which is frame will be written to output
+ninfo    = 100000
+# ...the simulation will continue for nframes frames.
+# ...therefore, total steps = nframes * ninfo
+nframes    = 3000
+# ...if set, after this many frames the noise on polarity turns off
+# ...if commented out, it gets default value: std::numeric_limits<unsigned>::max()
+noiseoff    = 2800
+# ...by default vertices are constrained on a spherical surface.
+# ...to relax this constrain and allow for radial deformations, un-comment:
+#spherical_constrain       = 0
+
+# ==============================  model parameters     ===================================
+# ...number of cells
+Nc       = 200
+# ...cell area stiffness
+Kc       = 1.0
+# ...cell preferred area
+A0c       = 1.0
+# ...cell bond tension
+bond_Tension   = 0.1
+# ...cell perimeter elasticity
+perim_Elasticity   = 0.0
+# ...cut-off and opening lengths of bonds for T1
+bond_T1_cutoff   = 0.04
+bond_T1_opening   = 0.045
+
+# ...vertex friction coefficient with external environment
+xi       = 1.0
+
+# ================== initial patterns of cell polarity (default=randomized) =============
+P0_axissymmetric       = 1
+# ...if P0_axissymmetric is set to 1, the code uses the parameters:
+P0_a0_by_PI       = 0
+P0_b0_by_PI       = 0
+
+# ================== changes initial cellular network, for ensemble averages =============
+run_id       = 1
+
+# ...if you do not want to initialize with a predefined surface, set the following to zero
+# ... if set to zero, a random tissue will be generated (default=1)
+read_initsurface       = 1
+
+#  ============================  parameters for active terms =============================
+# ...cell traction force magnitude
+F_mag   = 0.02
+# ...rate of cell polarity alignment with neighbors
+P_gamma   = 0.005
+# ...rate of cell polarity alignment with cell velocity
+P_nu   = 0.0
+# ...strength of rotational noise in the polarity
+P_noise   = 0.001
+# ...polarity norm constrains
+elastic_polarity       = 1
+# ...if elastic_polarity is set to 1, instead of a hard constrain |p|=1, the molecular field
+# ...in polarity p dynamics will include the term:  P_A * (1. |p|^2 ) * p
+P_A       = 0.001
+
+#  ======================  setting seed and initial noise used for debugging =============
+noise   = 0.01
+seed   = 1

@@ -10,6 +10,7 @@ class InstallOpenFPM(install):
         try:
             arch = platform.machine()
             if sys.platform == "darwin":  # macOS
+                print("Please make sure homebrew is installed on your system (https://brew.sh/).")
                 print("Please make sure command line tools or Xcode is installed on your system (xcode select --install).")
                 if arch == "arm64":
                     pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-arm64.pkg"
@@ -19,15 +20,16 @@ class InstallOpenFPM(install):
                 else:
                     print("Unsupported architecture")
                     sys.exit(1)
-                subprocess.check_call(['wget', '-O', 'bin/openfpm.pkg', pkg_url])
-                subprocess.check_call(['sudo','installer', '-pkg', 'bin/openfpm.pkg', '-target', '/'])
+                subprocess.check_call(['wget', '-O', 'src/TopoSPAM/bin/openfpm.pkg', pkg_url])
+                print("Sudo password is required to install OpenFPM.\n")
+                subprocess.check_call(['sudo','installer', '-pkg', 'src/TopoSPAM/bin/openfpm.pkg', '-target', '/'])
             elif sys.platform == "linux":  # Linux (assuming Ubuntu for .deb)
                 deb_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Linux-x86_64.deb"
             else:
                 print("Unsupported platform. We only support macOS and Linux.")
                 sys.exit(1)
 
-            make_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin')
+            make_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src/TopoSPAM/bin')
             subprocess.check_call([f'source /usr/local/openfpm/source/openfpm_vars && make all'],shell=True,cwd=make_dir)
 
         except Exception as e:
