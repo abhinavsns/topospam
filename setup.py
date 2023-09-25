@@ -7,6 +7,7 @@ import sys
 
 class InstallOpenFPM(install):
     def run(self):
+        install.run(self)
         arch = platform.machine()
         if sys.platform == "darwin":  # macOS
             print("Please make sure command line tools or Xcode is installed on your system (xcode select --install).")
@@ -28,7 +29,6 @@ class InstallOpenFPM(install):
 
         make_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin')
         subprocess.check_call([f'source /usr/local/openfpm/source/openfpm_vars && make all'],shell=True,cwd=make_dir)
-        install.run(self)
 
 
 setup(
