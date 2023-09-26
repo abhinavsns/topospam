@@ -8,7 +8,7 @@ LIBS = -lgsl -lboost_iostreams -lboost_program_options # -lboost_program_options
 
 LIBPATH = -L/usr/local/openfpm/dependencies/BOOST/lib -L/usr/local/Cellar/gsl/2.7.1/lib -L/opt/homebrew/Cellar/gsl/2.7.1/lib
 
-COMP = /usr/local/openfpm/dependencies/MPI/bin/mpic++ 
+COMP = g++-12
 
 HEADERS = src/tools.hpp
 
