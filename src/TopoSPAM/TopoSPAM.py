@@ -117,7 +117,7 @@ def RunActiveFluidSimulation(Params,nCores=1):
 
     except Exception as e:
         print(f"Failed to run command: {e}")
-    return
+    return int(outp.split()[-1])
 def RunActiveFluidSimulationWithProgress(Params,nCores=1):
     global repo_path
     data=np.array([Params.Gd_Sz,
