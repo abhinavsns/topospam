@@ -11,6 +11,7 @@ class InstallOpenFPM(install):
             arch = platform.machine()
             if sys.platform == "darwin":  # macOS
                 print("Please make sure homebrew is installed on your system (https://brew.sh/).")
+                subprocess.check_call(['sudo chown -R $(whoami) /opt/homebrew'])
                 subprocess.check_call(['brew', 'install', 'gsl'])
                 print("Please make sure command line tools or Xcode is installed on your system (xcode select --install).")
                 if arch == "arm64":
