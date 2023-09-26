@@ -137,7 +137,22 @@ def RunActiveFluidSimulationWithProgress(Params,nCores=1):
                    Params.relttol
                    ])
     np.savetxt(repo_path+'/bin/active2d.csv', data, delimiter=' ')
-    os.popen('[ -d'+repo_path+'/bin/Active2dOutput/ ] && rm -rf '+repo_path+'/bin/Active2dOutput/* || mkdir -p '+repo_path+'/bin/Active2dOutput/')
+    output_dir = os.path.join(repo_path, 'bin', 'Active2dOutput')
+    # Check if the directory exists
+    if os.path.exists(output_dir):
+        # Clear the directory
+        for file in os.listdir(output_dir):
+            file_path = os.path.join(output_dir, file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f"Failed to delete {file_path}. Reason: {e}")
+    else:
+        # Create the directory
+        os.makedirs(output_dir)
     p=subprocess.Popen('source  /usr/local/openfpm/source/openfpm_vars && ../Active2d ../active2d.csv', stdout=subprocess.PIPE,cwd=repo_path+'/bin/Active2dOutput',shell=True)
     f = FloatProgress(value=0.0,min=0.0, max=Params.tf) # instantiate the bar
     print("Simulation Progress (Based on current time value)")
