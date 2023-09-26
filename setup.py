@@ -15,7 +15,7 @@ class InstallOpenFPM(install):
                 subprocess.check_call(['brew', 'install', 'gcc@12'])
                 print("Please make sure command line tools or Xcode is installed on your system (xcode select --install).")
                 if arch == "arm64":
-                    pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-arm64.pkg"
+                    pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-arm64-gcc12.pkg"
                 elif arch == "x86_64":
                     pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-x86_64.pkg"
                 else:
