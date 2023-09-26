@@ -26,23 +26,23 @@ def set_repo_path(path):
     # Ensure the provided path exists
     if not os.path.exists(path):
         print(f"Error: The path '{path}' does not exist.")
-        return False
+        return
 
     # Check for the bin folder
     bin_path = os.path.join(path, 'bin')
     if not os.path.exists(bin_path):
         print(f"Error: The bin folder does not exist in '{path}'.")
-        return False
+        return
 
     # Check for the Makefile inside the bin folder
     makefile_path = os.path.join(bin_path, 'makefile')
     if not os.path.exists(makefile_path):
         print(f"Error: makefile not found in the bin folder of '{path}'.")
-        return False
+        return
 
     print(f"Success: The path '{path}' contains the TopoSPAM repository.")
     repo_path=path
-    return True
+    return
 
 class ActiveFluidParameters:
     Gd_Sz=41
@@ -79,12 +79,45 @@ def RunActiveFluidSimulation(Params,nCores=1):
                    Params.relttol
                    ])
     np.savetxt(repo_path+'/bin/active2d.csv', data, delimiter=' ')
-    os.popen('rm -r '+repo_path+'/bin/Active2dOutput/* && mkdir -p '+repo_path+'/bin/Active2dOutput')
-    stream=os.popen('cd '+repo_path+'/bin/Active2dOutput && source /usr/local/openfpm/source/openfpm_vars && mpirun -np '+str(nCores)+' ../Active2D ../active2d.csv')
-    output = stream.readlines()
-    print(output[-2])
-    print(output[-1])
-    return int(output[-1].split()[-1])
+    output_dir = os.path.join(repo_path, 'bin', 'Active2dOutput')
+
+    # Check if the directory exists
+    if os.path.exists(output_dir):
+        # Clear the directory
+        for file in os.listdir(output_dir):
+            file_path = os.path.join(output_dir, file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+                elif os.path.isdir(file_path):
+                    shutil.rmtree(file_path)
+            except Exception as e:
+                print(f"Failed to delete {file_path}. Reason: {e}")
+    else:
+        # Create the directory
+        os.makedirs(output_dir)
+    os.popen('[ -d'+repo_path+'/bin/Active2dOutput/ ] && rm -rf '+repo_path+'/bin/Active2dOutput/* || mkdir -p '+repo_path+'/bin/Active2dOutput/')
+    cmd = [
+    "/bin/bash", "-c",
+    "source /usr/local/openfpm/source/openfpm_vars && mpirun -np "+str(nCores)+" ../Active2d ../active2d.csv"
+    ]
+    try:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=output_dir)
+        stdout, stderr = p.communicate()
+        # Check for errors
+        if p.returncode != 0:
+            print(f"Command failed with error code {p.returncode}")
+            if stderr:
+                print(f"Error message: {stderr.decode('utf-8')}")
+        else:
+            # Split the output into lines and print the last two lines
+            output_lines = stdout.decode('utf-8').splitlines()
+            print(output_lines[-2])
+            print(output_lines[-1])
+
+    except Exception as e:
+        print(f"Failed to run command: {e}")
+    return
 def RunActiveFluidSimulationWithProgress(Params,nCores=1):
     global repo_path
     data=np.array([Params.Gd_Sz,
@@ -104,9 +137,7 @@ def RunActiveFluidSimulationWithProgress(Params,nCores=1):
                    Params.relttol
                    ])
     np.savetxt(repo_path+'/bin/active2d.csv', data, delimiter=' ')
-    os.popen('rm -rf '+repo_path+'/bin/Active2dOutput/*')
-    time.sleep(1)
-    os.popen('mkdir -p '+repo_path+'/bin/Active2dOutput')
+    os.popen('[ -d'+repo_path+'/bin/Active2dOutput/ ] && rm -rf '+repo_path+'/bin/Active2dOutput/* || mkdir -p '+repo_path+'/bin/Active2dOutput/')
     p=subprocess.Popen('source  /usr/local/openfpm/source/openfpm_vars && ../Active2d ../active2d.csv', stdout=subprocess.PIPE,cwd=repo_path+'/bin/Active2dOutput',shell=True)
     f = FloatProgress(value=0.0,min=0.0, max=Params.tf) # instantiate the bar
     print("Simulation Progress (Based on current time value)")
@@ -120,15 +151,15 @@ def RunActiveFluidSimulationWithProgress(Params,nCores=1):
             else:
                 f.value = float(line.rstrip().decode('utf-8'))
         ctr+=1
-    print("Simulation finished (reached t="+str(Params.tf)+")")            
+    print("Simulation finished (reached t="+str(Params.tf)+")")
     return int(outp.split()[-1])
-    
+
 def getSimData(iteration):
     global repo_path
     PropNames = ['00-Polarization', '01-Velocity', '02-Vorticity_0_0', '02-Vorticity_0_1', '02-Vorticity_1_0', '02-Vorticity_1_1', '03-ExternalForce', '04-Pressure', '05-StrainRate_0_0', '05-StrainRate_0_1', '05-StrainRate_1_0', '05-StrainRate_1_1', '06-Stress_0_0', '06-Stress_0_1', '06-Stress_1_0', '06-Stress_1_1', '07-MolecularField', '08-DPOL', '09-DV', '10-VRHS', '11-f1', '12-f2', '13-f3', '14-f4', '15-f5', '16-f6', '17-V_T', '18-DIV', '19-DELMU', '20-HPB', '21-FrankEnergy', '22-R', 'SubsetNumber', 'domain']
     if not os.path.exists(repo_path+'/bin/Active2dOutput/Polar_'+str(iteration)+'.pvtp'):
         print("Iteration does not exists")
-        return None 
+        return None
     reader = vtk.vtkXMLPPolyDataReader()
     reader.SetFileName(repo_path+'/bin/Active2dOutput/Polar_'+str(iteration)+'.pvtp')
     reader.Update()
@@ -172,32 +203,5 @@ def VizualizeAnimate(finalStep,jump=1):
     anim = FuncAnimation(fig, animate,np.arange(1,finalStep,jump),interval=150)
     display(HTML(anim.to_html5_video()))
     plt.close()
-
-
-
-# class SpringLatticeParameters:
-#     seed = 0
-#     nb_iterations = 20
-#     thickness = 0.1
-#     R_initial = 1
-#     theta_DV = 0.1931
-#     DV_present = True
-#     #'outDV_gradient':True,
-#     #'volume_conservation':False,
-#     k_type = 'k_c'
-#     theta_max =  0.8662, #32*np.pi/180
-#     theta_ref =  0.8662
-#     overwrite_old_simulation = True
-#     #'tol':1e-6,
-#     dt = 0.01
-#     angle_of_rotation = 0.1
-#     mesh_refine_factor = 30
-#     tol_by_dt = 1e-8
-#     isotropic_contribution = "all"
-#     anisotropic_contribution = "all"
-#     height_contribution = "no"
-#     genotype = "ecadGFPnbG4",#"fit_lambdas_df_ecadGFPnbG4.pkl", #fit_lambdas_df_ecadGFPnbG4myoVI.pk
-#     disc_name = 'isotropic_homogeneous'
-#     lambda_anisotropic_coeffs = [0, 1.1]
 
 
