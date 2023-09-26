@@ -71,7 +71,7 @@ class SpringLatticeParameters:
                     director2, director2, axes=0) + lambda3*np.tensordot(director3, director3, axes=0)
 
             elif self.nematic_coordinates == "polar":
-                theta = np.arctan2(pos_vector[1], pos_vector[0]) 
+                theta = np.arctan2(pos_vector[1], pos_vector[0])
                 r = np.sqrt(pos_vector[0]**2 + pos_vector[1]**2)
                 director1 = np.array([pos_vector[0]/r, pos_vector[1]/r,0])
                 director2 = np.array([-pos_vector[1]/r, pos_vector[0]/r,0])
@@ -79,7 +79,7 @@ class SpringLatticeParameters:
                 lambda_tensor = lambda1(r)*np.tensordot(director1, director1, axes=0) \
                 + lambda2(r)*np.tensordot(director2, director2, axes=0) \
                 + lambda3(r)*np.tensordot(director3, director3, axes=0)
-            
+
             elif self.nematic_coordinates == "cartesian":
                 director1 = [1,0,0]
                 director2 = [0,1,0]
@@ -98,13 +98,13 @@ class SpringLatticeParameters:
             # get lambda tensor at one endpoint
             lambda_alpha = get_lambda_tensor(
                 balls_df.iloc[row["ball1"]][["x", "y", "z"]].values,
-                theta_o=theta_o, step_size=step_size, lambda1=lambda1, lambda2=lambda2, lambda3 = lambda3, 
+                theta_o=theta_o, step_size=step_size, lambda1=lambda1, lambda2=lambda2, lambda3 = lambda3,
             )
-            
+
             # get lambda tensor at other endpoint
             lambda_beta = get_lambda_tensor(
                 balls_df.iloc[row["ball2"]][["x", "y", "z"]].values,
-                theta_o=theta_o, step_size=step_size, lambda1=lambda1, lambda2=lambda2, lambda3 = lambda3, 
+                theta_o=theta_o, step_size=step_size, lambda1=lambda1, lambda2=lambda2, lambda3 = lambda3,
             )
             # average the lambda tensors
             lambda_avg = (lambda_alpha + lambda_beta)/2
@@ -115,7 +115,7 @@ class SpringLatticeParameters:
             new_rest_length = np.linalg.norm(np.matmul(lambda_avg, spring_vector))
 
             return (new_rest_length)
-        
+
         balls_df = self.balls
         springs_df = self.springs
         # compute the rest length of each spring
@@ -129,8 +129,8 @@ class SpringLatticeParameters:
         self.balls[["x", "y", "z"]] = self.balls[["x", "y", "z"]] + np.abs(noise*np.random.randn(*self.balls[["x", "y", "z"]].shape))
         self.springs = update_springs(self.springs, self.balls[['x', 'y', 'z']])
 
-    def visualize(self, ax = None, fig = None, mode = "discrete", x = 'x', y = 'y', 
-                  title = "Strain Pattern", color_min = 0.7, color_max = 1.3, state = "final", 
+    def visualize(self, ax = None, fig = None, mode = "discrete", x = 'x', y = 'y',
+                  title = "Strain Pattern", color_min = 0.7, color_max = 1.3, state = "final",
                   tick_fontsize = 10, label_fontsize = 16, cbar_name=r'$\frac{l_{rest}}{l_{init}}$', title_fontsize = 20,
                   xlim_min = -1.2, xlim_max = 1.2, ylim_min = -1.2, ylim_max = 1.2,
                   ):
@@ -154,9 +154,9 @@ class SpringLatticeParameters:
                 plot_shell(balls_df, springs_df, x=x, y=y, #filename=dirname + 'sim_output/top_view_init.pdf',
                         cbar_name=cbar_name, title=title, color_min=color_min, color_max=color_min, cmap="RdBu_r", norm="linear",)
             else:
-                fig,ax = plot_shell_on_given_ax( balls_df, springs_df, x=x, y=y, ax = ax, fig = fig, 
+                fig,ax = plot_shell_on_given_ax( balls_df, springs_df, x=x, y=y, ax = ax, fig = fig,
                                                 xlim_min = xlim_min, xlim_max = xlim_max, ylim_min = ylim_min, ylim_max = ylim_max,
-                                       title = title, color_min=color_min, color_max=color_max, cmap="RdBu_r", return_ax=True, 
+                                       title = title, color_min=color_min, color_max=color_max, cmap="RdBu_r", return_ax=True,
                                        show_cbar=True, tick_fontsize=tick_fontsize, cbar_name=cbar_name, label_fontsize=label_fontsize,
                 )
                 #title
@@ -165,8 +165,10 @@ class SpringLatticeParameters:
 
         #return ax
 
-    def RunSpringLatticeSimulation(self, dt = 0.01, tol = 1e-6, csv_t_save = 500,
-                                   dirname = "../only_local/test_run/", bin_dir = "../bin/") :
+    def RunSpringLatticeSimulation(self, dt = 0.01, tol = 1e-6, csv_t_save = 500) :
+        global repo_path
+        dirname = repo_path+'/bin/SpringLatticeOutput/'
+        bin_dir = repo_path+'/bin/'
 
         os.makedirs(dirname, exist_ok=True)
         os.makedirs(dirname+'runfiles/', exist_ok=True)
@@ -174,7 +176,7 @@ class SpringLatticeParameters:
 
         [balls_df, springs_df] = initialize_cpp_simulation(
             self.balls, self.springs, dt=dt, csv_t_save=csv_t_save, tol=tol, path=dirname)
-        
+
         filelist = ['Makefile', 'main.cpp']
         for file in filelist: shutil.copy(bin_dir + file, dirname)
 
@@ -189,11 +191,11 @@ class SpringLatticeParameters:
         self.balls[['x', 'y', 'z']] = self.final_positions
         self.springs = update_springs(self.springs, self.balls[['x', 'y', 'z']])
 
-        return(self) 
+        return(self)
 
 
 
-    
+
     @classmethod
     def helloworld(cls):
         print("hello world")
