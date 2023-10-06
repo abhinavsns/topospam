@@ -20,6 +20,7 @@ node_modules/
 # Ignore compiled code
 dist/
 build/
+bin/Active2dOutput
 
 # Ignore log files
 *.log
