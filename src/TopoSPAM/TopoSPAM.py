@@ -253,7 +253,7 @@ class SpringLatticeParameters:
     thickness = 1.0
     lambda_tensor_diagonal = [1.5, 1/1.5, 1]
     nematic_coordinates = "polar"
-    mesh_geometry == "circle"
+    mesh_geometry = "circle"
 
 def load_mesh(Params, thick_mesh_file=None):  # find a better way to refer to the mesh file
 
@@ -261,7 +261,7 @@ def load_mesh(Params, thick_mesh_file=None):  # find a better way to refer to th
 
     if Params.mesh_geometry == "square":
         if thick_mesh_file is None:
-            thick_mesh_file = os.path.join(repo_path, "src/meshes/square.pkl")
+            thick_mesh_file = os.path.join(repo_path, "src/TopoSPAM/meshes/square.pkl")
         # replace the line below to either create a mesh or read a mesh
         [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
         # setting thickness
@@ -273,7 +273,7 @@ def load_mesh(Params, thick_mesh_file=None):  # find a better way to refer to th
 
     elif Params.mesh_geometry == "circle":
         if thick_mesh_file is None:
-            thick_mesh_file = os.path.join(repo_path, "meshes/circle.pkl")
+            thick_mesh_file = os.path.join(repo_path, "src/TopoSPAM/meshes/circle.pkl")
         [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
         # setting thickness
         balls_df["z"][len(balls_df)//2:] = Params.thickness
@@ -301,7 +301,7 @@ def load_strain_pattern(Params):
     lambda_tensor_diagonal = Params.lambda_tensor_diagonal
     # compute the rest length of each spring
     springs_df['l0'] = springs_df.apply(
-        get_rest_length, axis=1, lambda_tensor_diagonal = lambda_tensor_diagonal, nematic_coordinates="polar",)
+        get_rest_length, axis=1, lambda_tensor_diagonal = lambda_tensor_diagonal, nematic_coordinates="polar", balls_df=balls_df)
     springs_df['l0_target'] = springs_df['l0']
     springs_df['l1_initial'] = springs_df['l1']
     Params.springs = springs_df
@@ -338,7 +338,7 @@ def get_lambda_tensor(pos_vector, lambda_tensor_diagonal, nematic_coordinates="p
 
     return (lambda_tensor)
 
-def get_rest_length(row, lambda_tensor_diagonal = None, nematic_coordinates="polar", ):
+def get_rest_length(row, lambda_tensor_diagonal = None, nematic_coordinates="polar", balls_df = None):
     # this function will take a row of the springs_df and return the rest length
 
     # get lambda tensor at one endpoint in cartesian coordinates
@@ -384,13 +384,13 @@ def visualize(Params, ax=None, fig=None, mode="discrete", x='x', y='y',
 
     elif mode == "discrete":
 
-        balls_df = self.balls
-        springs_df = self.springs
+        balls_df = Params.balls
+        springs_df = Params.springs
 
         if state == "initial":
-            balls_df[['x', 'y', 'z']] = self.init_positions.values
+            balls_df[['x', 'y', 'z']] = Params.init_positions.values
         elif state == "final":
-            balls_df[['x', 'y', 'z']] = self.final_positions.values
+            balls_df[['x', 'y', 'z']] = Params.final_positions.values
         springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
 
         if ax is None:
@@ -438,4 +438,4 @@ def RunSpringLatticeSimulation(Params, dt=0.01, tol=1e-6, csv_t_save=500):
     self.springs = update_springs(
         self.springs, self.balls[['x', 'y', 'z']])
 
-        return (self)
+    return (self)
