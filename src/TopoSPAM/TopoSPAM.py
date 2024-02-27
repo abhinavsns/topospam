@@ -418,9 +418,9 @@ def RunSpringLatticeSimulation(Params, dt=0.01, tol=1e-6, csv_t_save=500):
     os.makedirs(dirname+'sim_output/', exist_ok=True)
 
     [balls_df, springs_df] = initialize_cpp_simulation(
-        self.balls, self.springs, dt=dt, csv_t_save=csv_t_save, tol=tol, path=dirname)
+        Params.balls, Params.springs, dt=dt, csv_t_save=csv_t_save, tol=tol, path=dirname)
 
-    filelist = ['Makefile', 'main.cpp']
+    filelist = ['Makefile', 'SpringLattice.cpp']
     for file in filelist:
         shutil.copy(bin_dir + file, dirname)
 
@@ -432,10 +432,10 @@ def RunSpringLatticeSimulation(Params, dt=0.01, tol=1e-6, csv_t_save=500):
 
     # access the output files
     final_balls_df = pd.read_csv(dirname + 'files/final_0_0.csv')
-    self.final_positions = pd.DataFrame(
+    Params.final_positions = pd.DataFrame(
         final_balls_df[['x[0]', 'x[1]', 'x[2]']].values, columns=['x', 'y', 'z'])
-    self.balls[['x', 'y', 'z']] = self.final_positions
-    self.springs = update_springs(
-        self.springs, self.balls[['x', 'y', 'z']])
+    Params.balls[['x', 'y', 'z']] = Params.final_positions
+    Params.springs = update_springs(
+        Params.springs, Params.balls[['x', 'y', 'z']])
 
-    return (self)
+    return (Params)

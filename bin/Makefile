@@ -1,4 +1,4 @@
-include /usr/local/openfpm/source/.openfpm.mk
+include ~/example.mk
 
 CC=mpic++
 
