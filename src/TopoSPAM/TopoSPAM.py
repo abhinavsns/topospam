@@ -286,10 +286,10 @@ def load_mesh(Params, thick_mesh_file=None):  # find a better way to refer to th
         balls_df["r"] = np.sqrt(balls_df["x"]**2 + balls_df["y"]**2)
         balls_df["theta"] = np.arctan2(balls_df["y"], balls_df["x"])
 
+    #springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']]) #, compute_lo = True
     Params.balls = balls_df
     Params.springs = springs_df
     Params.init_positions = balls_df[["x", "y", "z"]]
-    Params = add_noise(Params, noise=0.1)
 
     return(Params)
 
@@ -299,9 +299,9 @@ def load_strain_pattern(Params):
     balls_df = Params.balls
     springs_df = Params.springs
     lambda_tensor_diagonal = Params.lambda_tensor_diagonal
+    nematic_coordinates = Params.nematic_coordinates
     # compute the rest length of each spring
-    springs_df['l0'] = springs_df.apply(
-        get_rest_length, axis=1, lambda_tensor_diagonal = lambda_tensor_diagonal, nematic_coordinates="polar", balls_df=balls_df)
+    springs_df['l0'] = springs_df.apply(get_rest_length, axis=1, lambda_tensor_diagonal = lambda_tensor_diagonal, nematic_coordinates=nematic_coordinates, balls_df=balls_df)
     springs_df['l0_target'] = springs_df['l0']
     springs_df['l1_initial'] = springs_df['l1']
     Params.springs = springs_df
@@ -376,7 +376,7 @@ def add_noise(Params, noise=0.1):
 def visualize(Params, ax=None, fig=None, mode="discrete", x='x', y='y',
                   title="Strain Pattern", color_min=0.7, color_max=1.3, state="final",
                   tick_fontsize=10, label_fontsize=16, cbar_name=r'$\frac{l_{rest}}{l_{init}}$', title_fontsize=20,
-                  xlim_min=-1.2, xlim_max=1.2, ylim_min=-1.2, ylim_max=1.2,
+                  xlim_min=-1.2, xlim_max=1.2, ylim_min=-1.2, ylim_max=1.2, plot_only_top = True,
                   ):
 
     if mode == "continuous":
@@ -394,17 +394,17 @@ def visualize(Params, ax=None, fig=None, mode="discrete", x='x', y='y',
         springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
 
         if ax is None:
-            plot_shell(balls_df, springs_df, x=x, y=y,  # filename=dirname + 'sim_output/top_view_init.pdf',
-                    cbar_name=cbar_name, title=title, color_min=color_min, color_max=color_min, cmap="RdBu_r", norm="linear",)
-        else:
-            fig, ax = plot_shell_on_given_ax(balls_df, springs_df, x=x, y=y, ax=ax, fig=fig,
-                                            xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max,
-                                            title=title, color_min=color_min, color_max=color_max, cmap="RdBu_r", return_ax=True,
-                                            show_cbar=True, tick_fontsize=tick_fontsize, cbar_name=cbar_name, label_fontsize=label_fontsize,
-                                            )
-            # title
-            ax.set_title(title, fontsize=title_fontsize)
-            return fig, ax
+            fig, ax = plt.subplots()
+
+        fig, ax = plot_shell_on_given_ax(balls_df, springs_df, x=x, y=y, ax=ax, fig=fig, 
+                                        xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max,
+                                        title=title, color_min=color_min, color_max=color_max, cmap="RdBu_r", return_ax=True,
+                                        show_cbar=True, tick_fontsize=tick_fontsize, cbar_name=cbar_name, label_fontsize=label_fontsize,
+                                        plot_only_top=plot_only_top
+                                        )
+        # title
+        ax.set_title(title, fontsize=title_fontsize)
+        return fig, ax
 
     # return ax
 
