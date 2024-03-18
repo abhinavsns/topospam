@@ -11,7 +11,7 @@ from ipywidgets import widgets, interact_manual, FloatProgress
 from matplotlib.animation import FuncAnimation
 from matplotlib.offsetbox import AnchoredText
 import linecache
-from TopoSPAM.methods import *
+from TopoSPAM.mesh_methods import *
 repo_path = None
 
 
@@ -439,3 +439,4 @@ def RunSpringLatticeSimulation(Params, dt=0.01, tol=1e-6, csv_t_save=500):
         Params.springs, Params.balls[['x', 'y', 'z']])
 
     return (Params)
+
