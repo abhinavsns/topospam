@@ -21,7 +21,8 @@ node_modules/
 dist/
 build/
 bin/Active2dOutput
-bin
+bin/SpringLatticeOutput
+#bin
 
 # Ignore log files
 *.log
