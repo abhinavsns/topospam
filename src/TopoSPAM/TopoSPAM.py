@@ -255,13 +255,15 @@ class SpringLatticeParameters:
     nematic_coordinates = "polar"
     mesh_geometry = "circle"
 
+
 def load_mesh(Params, thick_mesh_file=None):  # find a better way to refer to the mesh file
 
     global repo_path
 
     if Params.mesh_geometry == "square":
         if thick_mesh_file is None:
-            thick_mesh_file = os.path.join(repo_path, "src/TopoSPAM/meshes/square.pkl")
+            thick_mesh_file = os.path.join(
+                repo_path, "src/TopoSPAM/meshes/square.pkl")
         # replace the line below to either create a mesh or read a mesh
         [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
         # setting thickness
@@ -273,7 +275,8 @@ def load_mesh(Params, thick_mesh_file=None):  # find a better way to refer to th
 
     elif Params.mesh_geometry == "circle":
         if thick_mesh_file is None:
-            thick_mesh_file = os.path.join(repo_path, "src/TopoSPAM/meshes/circle.pkl")
+            thick_mesh_file = os.path.join(
+                repo_path, "src/TopoSPAM/meshes/circle.pkl")
         [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
         # setting thickness
         balls_df["z"][len(balls_df)//2:] = Params.thickness
@@ -286,12 +289,12 @@ def load_mesh(Params, thick_mesh_file=None):  # find a better way to refer to th
         balls_df["r"] = np.sqrt(balls_df["x"]**2 + balls_df["y"]**2)
         balls_df["theta"] = np.arctan2(balls_df["y"], balls_df["x"])
 
-    #springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']]) #, compute_lo = True
+    # springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']]) #, compute_lo = True
     Params.balls = balls_df
     Params.springs = springs_df
     Params.init_positions = balls_df[["x", "y", "z"]]
 
-    return(Params)
+    return (Params)
 
 
 def load_strain_pattern(Params):
@@ -301,7 +304,8 @@ def load_strain_pattern(Params):
     lambda_tensor_diagonal = Params.lambda_tensor_diagonal
     nematic_coordinates = Params.nematic_coordinates
     # compute the rest length of each spring
-    springs_df['l0'] = springs_df.apply(get_rest_length, axis=1, lambda_tensor_diagonal = lambda_tensor_diagonal, nematic_coordinates=nematic_coordinates, balls_df=balls_df)
+    springs_df['l0'] = springs_df.apply(get_rest_length, axis=1, lambda_tensor_diagonal=lambda_tensor_diagonal,
+                                        nematic_coordinates=nematic_coordinates, balls_df=balls_df)
     springs_df['l0_target'] = springs_df['l0']
     springs_df['l1_initial'] = springs_df['l1']
     Params.springs = springs_df
@@ -338,7 +342,8 @@ def get_lambda_tensor(pos_vector, lambda_tensor_diagonal, nematic_coordinates="p
 
     return (lambda_tensor)
 
-def get_rest_length(row, lambda_tensor_diagonal = None, nematic_coordinates="polar", balls_df = None):
+
+def get_rest_length(row, lambda_tensor_diagonal=None, nematic_coordinates="polar", balls_df=None):
     # this function will take a row of the springs_df and return the rest length
 
     # get lambda tensor at one endpoint in cartesian coordinates
@@ -365,19 +370,21 @@ def get_rest_length(row, lambda_tensor_diagonal = None, nematic_coordinates="pol
 
     return (new_rest_length)
 
+
 def add_noise(Params, noise=0.1):
-        # add noise to the initial positions
+    # add noise to the initial positions
     Params.balls[["x", "y", "z"]] = Params.balls[["x", "y", "z"]] + \
         np.abs(noise*np.random.randn(*Params.balls[["x", "y", "z"]].shape))
     Params.springs = update_springs(
         Params.springs, Params.balls[['x', 'y', 'z']])
     return Params
 
+
 def visualize(Params, ax=None, fig=None, mode="discrete", x='x', y='y',
-                  title="Strain Pattern", color_min=0.7, color_max=1.3, state="final",
-                  tick_fontsize=10, label_fontsize=16, cbar_name=r'$\frac{l_{rest}}{l_{init}}$', title_fontsize=20,
-                  xlim_min=-1.2, xlim_max=1.2, ylim_min=-1.2, ylim_max=1.2, plot_only_top = True,
-                  ):
+              title="Strain Pattern", color_min=0.7, color_max=1.3, state="final",
+              tick_fontsize=10, label_fontsize=16, cbar_name=r'$\frac{l_{rest}}{l_{init}}$', title_fontsize=20,
+              xlim_min=-1.2, xlim_max=1.2, ylim_min=-1.2, ylim_max=1.2, plot_only_top=True,
+              ):
 
     if mode == "continuous":
         pass
@@ -396,17 +403,18 @@ def visualize(Params, ax=None, fig=None, mode="discrete", x='x', y='y',
         if ax is None:
             fig, ax = plt.subplots()
 
-        fig, ax = plot_shell_on_given_ax(balls_df, springs_df, x=x, y=y, ax=ax, fig=fig, 
-                                        xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max,
-                                        title=title, color_min=color_min, color_max=color_max, cmap="RdBu_r", return_ax=True,
-                                        show_cbar=True, tick_fontsize=tick_fontsize, cbar_name=cbar_name, label_fontsize=label_fontsize,
-                                        plot_only_top=plot_only_top
-                                        )
+        fig, ax = plot_shell_on_given_ax(balls_df, springs_df, x=x, y=y, ax=ax, fig=fig,
+                                         xlim_min=xlim_min, xlim_max=xlim_max, ylim_min=ylim_min, ylim_max=ylim_max,
+                                         title=title, color_min=color_min, color_max=color_max, cmap="RdBu_r", return_ax=True,
+                                         show_cbar=True, tick_fontsize=tick_fontsize, cbar_name=cbar_name, label_fontsize=label_fontsize,
+                                         plot_only_top=plot_only_top
+                                         )
         # title
         ax.set_title(title, fontsize=title_fontsize)
         return fig, ax
 
     # return ax
+
 
 def RunSpringLatticeSimulation(Params, dt=0.01, tol=1e-6, csv_t_save=500):
     global repo_path
@@ -420,14 +428,16 @@ def RunSpringLatticeSimulation(Params, dt=0.01, tol=1e-6, csv_t_save=500):
     [balls_df, springs_df] = initialize_cpp_simulation(
         Params.balls, Params.springs, dt=dt, csv_t_save=csv_t_save, tol=tol, path=dirname)
 
-    filelist = ['Makefile', 'SpringLattice.cpp']
-    for file in filelist:
-        shutil.copy(bin_dir + file, dirname)
+    # filelist = ['Makefile', 'SpringLattice.cpp']
+    # for file in filelist:
+    #    shutil.copy(bin_dir + file, dirname)
 
     # running the simulation
     print('$$$$$$$ Running openfpm $$$$$$$')
+    os.system("cd " + bin_dir +
+              " && source /usr/local/openfpm/source/openfpm_vars && make SpringLattice")
     os.system("cd " + dirname +
-                " && /usr/local/openfpm/source/openfpm_vars && make && SpringLattice")
+              " && source /usr/local/openfpm/source/openfpm_vars && ../SpringLattice")
     print('$$$$ Exit OpenFPM $$$$')
 
     # access the output files
@@ -439,4 +449,3 @@ def RunSpringLatticeSimulation(Params, dt=0.01, tol=1e-6, csv_t_save=500):
         Params.springs, Params.balls[['x', 'y', 'z']])
 
     return (Params)
-
