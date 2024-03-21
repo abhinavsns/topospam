@@ -2,7 +2,7 @@ EXECUTABLE = organoid
 
 INCS = -I src/ -I examples/ -I build/ -I./src/eigen-3.4.0 -I/usr/local/openfpm/dependencies/BOOST/include -I/usr/local/Cellar/gsl/2.7.1/include/ -I/opt/homebrew/include
 
-FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -fopenmp -g -Wl, -ldclassic
+FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -fopenmp -g -Wl -ld_classic
 
 LIBS = -lgsl -lboost_iostreams -lboost_program_options # -lboost_program_options
 

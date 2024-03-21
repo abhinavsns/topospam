@@ -20,6 +20,9 @@ node_modules/
 # Ignore compiled code
 dist/
 build/
+bin/Active2dOutput
+bin/SpringLatticeOutput
+#bin
 
 # Ignore log files
 *.log

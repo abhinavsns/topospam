@@ -5,6 +5,7 @@ import subprocess
 import os
 import sys
 
+
 class InstallOpenFPM(install):
     def run(self):
         try:
@@ -13,7 +14,10 @@ class InstallOpenFPM(install):
                 print("Please make sure homebrew is installed on your system (https://brew.sh/). With homebrew, we will install gsl and gcc@12.")
                 subprocess.check_call(['brew', 'install', 'gsl'])
                 subprocess.check_call(['brew', 'install', 'gcc@12'])
-                print("Please make sure command line tools or Xcode is installed on your system (xcode select --install).")
+                subprocess.check_call(['brew', 'install', 'libx11'])
+                subprocess.check_call(['brew', 'install', 'ffmpeg'])
+                print(
+                    "Please make sure command line tools or Xcode is installed on your system (xcode select --install).")
                 if arch == "arm64":
                     pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-arm64-gcc12.pkg"
                 elif arch == "x86_64":
@@ -21,20 +25,26 @@ class InstallOpenFPM(install):
                 else:
                     print("Unsupported architecture")
                     sys.exit(1)
-                subprocess.check_call(['wget', '-O', './bin/openfpm.pkg', pkg_url])
+                subprocess.check_call(
+                    ['wget', '-O', './bin/openfpm.pkg', pkg_url])
                 print("Sudo password is required to install OpenFPM.\n")
-                subprocess.check_call(['sudo','installer', '-pkg', './bin/openfpm.pkg', '-target', '/'])
+                subprocess.check_call(
+                    ['sudo', 'installer', '-pkg', './bin/openfpm.pkg', '-target', '/'])
             elif sys.platform == "linux":  # Linux (assuming Ubuntu for .deb)
                 deb_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Linux-x86_64.deb"
             else:
                 print("Unsupported platform. We only support macOS and Linux.")
                 sys.exit(1)
 
-            make_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin')
-            subprocess.check_call([f'source /usr/local/openfpm/source/openfpm_vars && make all'],shell=True,cwd=make_dir)
+            make_dir = os.path.join(os.path.dirname(
+                os.path.abspath(__file__)), 'bin')
+            subprocess.check_call(
+                [f'source /usr/local/openfpm/source/openfpm_vars && make all'], shell=True, cwd=make_dir)
 
-            make_dir2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bin/vertex_model3d_monolayer')
-            subprocess.check_call([f'source /usr/local/openfpm/source/openfpm_vars && make all'],shell=True,cwd=make_dir2)
+            make_dir2 = os.path.join(os.path.dirname(
+                os.path.abspath(__file__)), 'bin/vertex_model3d_monolayer')
+            subprocess.check_call(
+                [f'source /usr/local/openfpm/source/openfpm_vars && make all'], shell=True, cwd=make_dir2)
 
         except Exception as e:
             print(f"Error during installation of OpenFPM: {e}")

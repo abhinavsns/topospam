@@ -27,6 +27,7 @@ from scipy.interpolate import CubicSpline
 from scipy.interpolate import splev
 from scipy.interpolate import BSpline
 from scipy.interpolate import splrep
+from scipy.spatial import Delaunay
 
 #import meshzoo
 #import optimesh
@@ -722,32 +723,6 @@ def get_polygons(G=None, balls=None, springs=None, solid = True, stack = None, c
         
     return(polygons)
 
-def update_springs(springs,ball_positions,compute_lo=False):
-    springs_ball1s=ball_positions.loc[pd.Series.tolist(springs.ball1)]
-    springs_ball1s.columns=['x1','y1','z1']
-    springs_ball1s.reset_index(drop=True, inplace=True)
-    springs.loc[:,['x1','y1','z1']]=springs_ball1s
-
-    springs_ball2s=ball_positions.loc[pd.Series.tolist(springs.ball2)]
-    springs_ball2s.columns=['x2','y2','z2']
-    springs_ball2s.reset_index(drop=True, inplace=True)
-    springs.loc[:,['x2','y2','z2']]=springs_ball2s
-
-    #change the l1 and dls for the springs
-    springs_ball1s.columns=['x','y','z']
-    springs_ball2s.columns=['x','y','z']
-    disp=[springs_ball2s.x-springs_ball1s.x,springs_ball2s.y-springs_ball1s.y,springs_ball2s.z-springs_ball1s.z]
-    length=disp[0]**2+disp[1]**2+disp[2]**2
-    length=length.apply(lambda row: math.sqrt(row))
-    springs.l1=length
-    
-    if compute_lo:
-        springs.l0=springs.l1
-    springs.dl=springs.l1-springs.l0
-    
-    
-    return(springs)
-    
 def extract_thin_mesh(balls, springs, which = "top", reindex = False):
     
     if which == "top":
@@ -1279,9 +1254,549 @@ def get_final_dataframe(path = '', balls_initial = None, springs_initial = None,
     return([balls_timepoint, springs_timepoint])
 
 
+def get_polygons(G=None, balls=None, springs=None, solid=True, stack=None, compute_attributes=True, pattern='trianglemesh', *argv, **kwarg):
+
+    if G is None:
+        # if G is None then I assume that balls and springs has been sent as argument
+        G = dftoGraph(balls, springs)
+
+    polygon_size = 3
+
+    all_cliques = nx.enumerate_all_cliques(G)
+    triad_cliques = [x for x in all_cliques if len(x) == polygon_size]
+
+    polygons = pd.DataFrame({
+        'vertices': triad_cliques,
+        'Nbvertices': [polygon_size]*len(triad_cliques)
+    })
+
+    # get all node attributes
+    node_attributes = list(
+        set([k for n in G.nodes for k in G.nodes[n].keys()]))
+
+    if 'stack' in node_attributes:
+
+        stack_0 = set([n for n, d in G.nodes(data=True) if d['stack'] == 0])
+        stack_1 = set([n for n, d in G.nodes(data=True) if d['stack'] == 1])
+
+        def get_polygon_stack(vertices):
+            if vertices.issubset(stack_0):
+                return (0)
+            elif vertices.issubset(stack_1):
+                return (1)
+            else:
+                return (-99999)
+
+        polygons['stack'] = polygons.apply(
+            lambda row: get_polygon_stack(set(row['vertices'])), axis=1)
+
+        if not solid:
+            polygons = polygons.loc[polygons['stack'] >= 0]
+
+        if stack is not None:
+            polygons = polygons.loc[polygons['stack'] == stack]
+
+    if compute_attributes:
+        polygons = update_triangles(polygons=polygons, G=G)
+
+    return (polygons)
 
 
+def init_mesh(nrow=3, ncol=3, pattern='trianglemesh', triangle_areas=False, spring_const=1, znoise=False, mu=0, sigma=0.01, thickness=2, base='flat', thin=False, viscoelastic_coeff=0.5, r_thres=None):
+    # this function generates a new mesh
+    if pattern == 'cubicmesh':
+        [balls, springs] = init_cubicmesh(nrow=nrow, ncol=ncol, spring_const=spring_const, znoise=znoise,
+                                          thickness=thickness, base=base, thin=thin, viscoelastic_coeff=viscoelastic_coeff)
+    if pattern == 'squaremesh':
+        # add thickness to the square mesh
+        [balls, springs] = init_squaremesh(
+            nrow=nrow, ncol=ncol, spring_const=spring_const, znoise=znoise)
+    if pattern == 'trianglemesh':
+        [balls, springs] = init_trianglemesh(nrow=nrow, ncol=ncol, spring_const=spring_const, znoise=znoise,
+                                             thickness=thickness, base=base, thin=thin, viscoelastic_coeff=viscoelastic_coeff)
+    if pattern == 'circularboundary':
+        [balls, springs] = init_trianglemesh_circularboundary(
+            r_thres=r_thres, nrow=nrow, ncol=ncol, spring_const=spring_const, znoise=znoise, thickness=thickness, base=base, thin=thin, viscoelastic_coeff=viscoelastic_coeff)
+    if pattern == 'croppedcenter':
+        [balls, springs] = init_trianglemesh_circularboundary_cropped(
+            r_thres=r_thres, nrow=nrow, ncol=ncol, spring_const=spring_const, znoise=znoise, thickness=thickness, base=base, thin=thin, viscoelastic_coeff=viscoelastic_coeff)
+    if triangle_areas:
+        [balls, springs] = initialize_triangles_info(balls, springs)
+    return ([balls, springs])
 
 
+def init_trianglemesh(nrow=3, ncol=5, spring_const=1, znoise=False, mu=0, sigma=0.01, thickness=2, base='flat', thin=False, viscoelastic_coeff=0.5):
+
+    if thin:
+        stacks = [0]
+    else:
+        stacks = [0, 1]
+
+    def idbp(i, j, k, nrow=nrow, ncol=ncol):  # IDbyPosition
+        nballs = int(nrow*ncol/2)  # number of balls on one sheet
+        if i >= nrow or j >= ncol or i < 0 or j < 0 or k < 0 or k > 1:
+            return (None)
+        if thin and k != 0:  # If thin is true then k can only be 0
+            return (None)
+        if ncol % 2 == 1:
+            return (int((i*ncol+j-1)/2)+k*nballs)  # think about this
+        if ncol % 2 == 0:
+            return (int((i*ncol+j)/2)+k*nballs)
+
+    balls_colnames = ['ID', 'x', 'y', 'z', 'ax', 'ay', 'az', 'neighbours',
+                      'spring1', 'spring2', 'row', 'column', 'stack', 'vx', 'vy', 'vz', 'mass']
+    balls = pd.DataFrame(0, index=range(0), columns=range(len(balls_colnames)))
+    balls.columns = balls_colnames
+    balls.index = range(balls.shape[0])
+
+    # dataframe of springs
+    # ID, X1, Y1, Z1, X2, Y2, Z2, k, Natural length, Extension in length, Ball1, Ball2
+    springs_colnames = ['ID', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2', 'k',
+                        'l0', 'l1', 'dl', 'ball1', 'ball2', 'type', 'viscoelastic_coeff']
+    springs = pd.DataFrame(0, index=range(
+        0), columns=range(len(springs_colnames)))
+    springs.columns = springs_colnames
+
+    pattern = np.zeros((nrow, ncol))
+
+    # this whole odd even thing can be made very simple, in two lines, 10 lines of code not needed for this
+    even = [x for x in range(nrow) if x % 2 == 0]
+    odd = [x for x in range(ncol) if x % 2 == 1]
+    even1 = []
+    for i in range(len(even)):
+        even1 += [even[i]]*len(odd)
+    odd1 = odd*len(even)
+    # for nrow, ncol = 5, even1 - > [0, 0, 2, 2, 4, 4], odd1 -> [1, 3, 1, 3, 1, 3]
+
+    even = [x for x in range(ncol) if x % 2 == 0]
+    odd = [x for x in range(nrow) if x % 2 == 1]
+    even2 = []
+    for i in range(len(even)):
+        even2 += [even[i]]*len(odd)
+    odd2 = odd*len(even)
+
+    even3 = even1+odd2
+    odd3 = odd1+even2
+    pattern[even3, odd3] = 1
+    # pattern has ones in places where nodes are
+    ######################
+
+    spring_ID = -1
+    for k in stacks:  # if thin then stacks = [0] else stacks = [0,1]
+        for i in range(nrow):
+            for j in range(ncol):
+                if pattern[i, j] == 0:
+                    continue
+                ID = idbp(i, j, k)
+                neighbours = [idbp(i-1, j-1, k), idbp(i-1, j+1, k), idbp(i-1, j-1, k-1), idbp(i-1, j+1, k-1), idbp(i-1, j-1, k+1), idbp(i-1, j+1, k+1),
+                              idbp(i, j-2, k), idbp(i, j+2, k), idbp(i, j-2, k-1), idbp(i,
+                                                                                        j+2, k-1), idbp(i, j-2, k+1), idbp(i, j+2, k+1),
+                              idbp(i+1, j-1, k), idbp(i+1, j+1, k), idbp(i+1, j-1, k-1), idbp(
+                                  i+1, j+1, k-1), idbp(i+1, j-1, k+1), idbp(i+1, j+1, k+1),
+                              idbp(i, j, k-1), idbp(i, j, k+1)]
+                neighbours = list(filter(None.__ne__, neighbours))
+
+                # balls_colnames=['ID', 'x', 'y', 'z', 'ax', 'ay', 'az', 'neighbours', 'spring1', 'spring2','row','column','stack', 'vx', 'vy', 'vz', 'mass']
+                row = pd.DataFrame(
+                    [[ID]+[j, i*math.sqrt(3), k*thickness]+[0]*3+[neighbours]+['']*2+[i, j, k]+[0]*3+[1]])
+                row.columns = balls.columns
+                balls = pd.concat([balls, row])
+                balls.index = range(balls.shape[0])
+
+                # we add springs to only some of the neighbours to avoid adding the same spring again from the other end
+                neighbour1s = [idbp(i, j+2, k), idbp(i+1, j-1, k), idbp(i+1, j+1, k), idbp(i, j, k+1),
+                               idbp(i, j+2, k+1), idbp(i+1, j -
+                                                       1, k+1), idbp(i+1, j+1, k+1),
+                               idbp(i, j+2, k-1), idbp(i+1, j-1, k-1), idbp(i+1, j+1, k-1)]
+                types = ['inplane', 'inplane', 'inplane', 'edge',
+                         'face', 'face', 'face',
+                         'face', 'face', 'face']
+                indices = [x for x in range(
+                    len(neighbour1s)) if not (neighbour1s[x] == None)]
+
+                neighbour1s = [neighbour1s[x] for x in indices]
+                type1s = [types[x] for x in indices]
+                for x in range(len(neighbour1s)):
+                    # add spring
+                    # springs_colnames=['ID', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2', 'k', 'lo', 'l1','dl', 'ball1', 'ball2','type']
+                    spring_ID = spring_ID+1
+                    row = pd.DataFrame([[spring_ID]+[0]*6+[spring_const]+[0]
+                                       * 3+[ID, neighbour1s[x]]+[type1s[x]]+[viscoelastic_coeff]])
+                    row.columns = springs.columns
+                    springs = pd.concat([springs, row])
+                    springs.index = range(springs.shape[0])
+
+    origin_x = (max(balls['x'])+min(balls['x']))/2
+    origin_y = (max(balls['y'])+min(balls['y']))/2
+
+    # subtract from each ball the coordinates of center
+    balls.loc[:, ['x']] = balls.loc[:, ['x']]-origin_x
+    balls.loc[:, ['y']] = balls.loc[:, ['y']]-origin_y
+
+    springs = update_springs(
+        springs, balls.loc[:, ['x', 'y', 'z']], compute_lo=True)
+
+    return ([balls, springs])
 
 
+def poisson_disc_sampling(r, dim):
+    """code from: https://github.com/scipython/scipython-maths/tree/master/poisson_disc_sampled_noise"""
+
+    # Choose up to k points around each reference point as candidates for a new
+    # sample point
+    k = 30
+
+    # r - Minimum distance between sample
+
+    (width, height) = (dim)
+
+    # Cell side length
+    a = r/np.sqrt(2)
+    # Number of cells in the x- and y-directions of the grid
+    nx, ny = int(width / a) + 1, int(height / a) + 1
+
+    # A list of coordinates in the grid of cells
+    coords_list = [(ix, iy) for ix in range(nx) for iy in range(ny)]
+    # Initilalize the dictionary of cells: each key is a cell's coordinates, the
+    # corresponding value is the index of that cell's point's coordinates in the
+    # samples list (or None if the cell is empty).
+    cells = {coords: None for coords in coords_list}
+
+    def get_cell_coords(pt):
+        """Get the coordinates of the cell that pt = (x,y) falls in."""
+
+        return int(pt[0] // a), int(pt[1] // a)
+
+    def get_neighbours(coords):
+        """Return the indexes of points in cells neighbouring cell at coords.
+
+        For the cell at coords = (x,y), return the indexes of points in the cells
+        with neighbouring coordinates illustrated below: ie those cells that could 
+        contain points closer than r.
+
+                                         ooo
+                                        ooooo
+                                        ooXoo
+                                        ooooo
+                                         ooo
+
+        """
+
+        dxdy = [(-1, -2), (0, -2), (1, -2), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1),
+                (-2, 0), (-1, 0), (1, 0), (2, 0), (-2,
+                                                   1), (-1, 1), (0, 1), (1, 1), (2, 1),
+                (-1, 2), (0, 2), (1, 2), (0, 0)]
+        neighbours = []
+        for dx, dy in dxdy:
+            neighbour_coords = coords[0] + dx, coords[1] + dy
+            if not (0 <= neighbour_coords[0] < nx and
+                    0 <= neighbour_coords[1] < ny):
+                # We're off the grid: no neighbours here.
+                continue
+            neighbour_cell = cells[neighbour_coords]
+            if neighbour_cell is not None:
+                # This cell is occupied: store this index of the contained point.
+                neighbours.append(neighbour_cell)
+        return neighbours
+
+    def point_valid(pt):
+        """Is pt a valid point to emit as a sample?
+
+        It must be no closer than r from any other point: check the cells in its
+        immediate neighbourhood.
+
+        """
+
+        cell_coords = get_cell_coords(pt)
+        for idx in get_neighbours(cell_coords):
+            nearby_pt = samples[idx]
+            # Squared distance between or candidate point, pt, and this nearby_pt.
+            distance2 = (nearby_pt[0]-pt[0])**2 + (nearby_pt[1]-pt[1])**2
+            if distance2 < r**2:
+                # The points are too close, so pt is not a candidate.
+                return False
+        # All points tested: if we're here, pt is valid
+        return True
+
+    def get_point(k, refpt):
+        """Try to find a candidate point relative to refpt to emit in the sample.
+
+        We draw up to k points from the annulus of inner radius r, outer radius 2r
+        around the reference point, refpt. If none of them are suitable (because
+        they're too close to existing points in the sample), return False.
+        Otherwise, return the pt.
+
+        """
+        i = 0
+        while i < k:
+            rho, theta = np.random.uniform(
+                r, 2*r), np.random.uniform(0, 2*np.pi)
+            pt = refpt[0] + rho*np.cos(theta), refpt[1] + rho*np.sin(theta)
+            if not (0 <= pt[0] < width and 0 <= pt[1] < height):
+                # This point falls outside the domain, so try again.
+                continue
+            if point_valid(pt):
+                return pt
+            i += 1
+        # We failed to find a suitable point in the vicinity of refpt.
+        return False
+
+    # Pick a random point to start with.
+    pt = (np.random.uniform(0, width), np.random.uniform(0, height))
+    samples = [pt]
+    # Our first sample is indexed at 0 in the samples list...
+    cells[get_cell_coords(pt)] = 0
+    # ... and it is active, in the sense that we're going to look for more points
+    # in its neighbourhood.
+    active = [0]
+
+    nsamples = 1
+    # As long as there are points in the active list, keep trying to find samples.
+    while active:
+        # choose a random "reference" point from the active list.
+        idx = np.random.choice(active)
+        refpt = samples[idx]
+        # Try to pick a new point relative to the reference point.
+        pt = get_point(k, refpt)
+        if pt:
+            # Point pt is valid: add it to the samples list and mark it as active
+            samples.append(pt)
+            nsamples += 1
+            active.append(len(samples)-1)
+            cells[get_cell_coords(pt)] = len(samples) - 1
+        else:
+            # We had to give up looking for valid points near refpt, so remove it
+            # from the list of "active" points.
+            active.remove(idx)
+
+    samples = np.array(samples)
+    samples[:, 0] -= width/2
+    samples[:, 1] -= height/2
+
+    return (samples)
+
+
+def make_poiss_layer(dim, r, shape, border_bool, alpha):
+
+    if shape == 'square':
+
+        if border_bool:
+            x_min = -dim[0]/2
+            x_max = dim[0]/2
+            y_min = -dim[1]/2
+            y_max = dim[1]/2
+
+            vert_border_y = np.arange(y_min, y_max, r)
+            hor_border_x = np.arange(x_min, x_max, r)
+
+            v_xmin = np.column_stack(
+                (np.repeat(x_min, len(vert_border_y)).T, vert_border_y.T))
+            v_xmax = np.column_stack(
+                (np.repeat(x_max, len(vert_border_y)).T, -1*vert_border_y.T,))
+            h_ymin = np.column_stack(
+                (-1*hor_border_x.T, np.repeat(y_min, len(hor_border_x)).T))
+            h_ymax = np.column_stack(
+                (hor_border_x.T, np.repeat(y_max, len(hor_border_x)).T))
+
+            border = np.vstack((v_xmin, v_xmax, h_ymin, h_ymax))
+
+        # generate points in first layer
+        samples = poisson_disc_sampling(r, (dim[0] - r, dim[1] - r))
+
+    elif (shape == 'circle'):
+        # generate border points
+        if border_bool:
+
+            angle = r/dim[0]
+
+            angles = np.linspace(0, 2*np.pi, int(np.round(2*np.pi/angle)))
+
+            circle_x = dim[0]*np.sin(angles)
+            circle_y = dim[0]*np.cos(angles)
+
+            border = np.column_stack((circle_x, circle_y))
+
+        # generate points inside octagon
+        samples = poisson_disc_sampling(
+            r, (dim[0]*2 - r/1.5, dim[1]*2 - r/1.5))
+        # print(len(samples))
+        samples = samples[np.sqrt(
+            samples[:, 0]**2 + samples[:, 1]**2) < (dim[0] - r/3)]
+        # print(len(samples))
+
+    if border_bool:
+        samples = np.vstack((samples, border))
+
+    balls_colnames = ['ID', 'x', 'y', 'z', 'ax', 'ay', 'az', 'neighbours',
+                      'spring1', 'spring2', 'row', 'column', 'stack', 'vx', 'vy', 'vz', 'mass']
+    balls = pd.DataFrame(0, index=range(0), columns=range(len(balls_colnames)))
+    balls.columns = balls_colnames
+    balls.index = range(balls.shape[0])
+
+    balls.x = samples[:, 0]
+    balls.y = samples[:, 1]
+    balls.z = 0
+
+    return (balls)
+
+
+def poisson_mesh(dim, r, layers, thickness, k, ns, mass=1, shape='square', border_bool=True, alpha=180):
+    """Poisson mesh generated using the poisson disc sampling algorithm 
+    (poisson_disc_sampling function above)
+    
+    The function takes dimensions (total size of mesh), 
+    r_poiss (determines density of points), number of layers, layer thickness, 
+    and other particle attributes (k, ns, mass)
+    """
+
+    """square mesh is default, regular border generated
+    
+    in the future, should implement alternative borders as well!
+    """
+
+    balls = make_poiss_layer(dim, r, shape, border_bool, alpha)
+
+    # deal with additional layers
+    if layers > 1:
+        for i in range(layers)[1:]:
+            new_balls = make_poiss_layer(dim, r, shape, border_bool, alpha)
+
+            new_balls.z = thickness*i
+            new_balls.index = range(
+                balls.shape[0], balls.shape[0]+new_balls.shape[0])
+            balls = pd.concat([balls, new_balls])
+
+    balls[['vx', 'vy', 'vz']] = 0
+    balls.mass = mass
+
+    balls.ID = balls.index
+
+    # empty lists for neighbours and springs, will be extended in loop below
+    balls.neighbours = [[] for _ in range(len(balls))]
+    balls.spring1 = [[] for _ in range(len(balls))]
+    balls.spring2 = [[] for _ in range(len(balls))]
+
+    # dataframe of springs
+    # ID, X1, Y1, Z1, X2, Y2, Z2, k, Natural length, Extension in length, Ball1, Ball2
+    springs_colnames = ['ID', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2',
+                        'k', 'l0', 'l1', 'dl',
+                        'ball1', 'ball2', 'type', 'viscoelastic_coeff']
+    springs = pd.DataFrame(0, index=range(
+        0), columns=range(len(springs_colnames)))
+    springs.columns = springs_colnames
+
+    # delunay triangulation used to connect the balls into triangles
+    tri = Delaunay(balls[['x', 'y', 'z']].values)
+
+    # iterate through simplexes and save connections as springs
+    # could potentially be done without the horrifying nested loops but not sure how atm
+    for simplex in tri.simplices:
+        for point in simplex:
+            for neighbour in simplex[simplex != point]:
+                # check whether the connection has already been saved,
+                # if not, add it as a spring
+                if (balls.loc[point, 'neighbours'].count(neighbour) == 0):
+                    balls.loc[point, 'neighbours'].append(neighbour)
+                    balls.loc[neighbour, 'neighbours'].append(point)
+
+                    spring_id = springs.shape[0]
+
+                    balls.loc[point, 'spring1'].append(spring_id)
+                    balls.loc[neighbour, 'spring2'].append(spring_id)
+
+                    length = np.sqrt(sum(np.square(balls.loc[point, ['x', 'y', 'z']].values -
+                                                   balls.loc[neighbour, ['x', 'y', 'z']].values)))
+
+                    row = pd.DataFrame([[spring_id] +
+                                        list(balls.loc[point, ['x', 'y', 'z']].values) +
+                                        list(balls.loc[neighbour, ['x', 'y', 'z']].values) +
+                                       [k, length, length, 0, point, neighbour, 0, ns]])
+
+                    row.columns = springs.columns
+                    springs = pd.concat([springs, row])
+                    springs.index = range(springs.shape[0])
+
+    # update spring types as either face (default) or inplane
+    # if z1 == z2
+    springs['type'] = 'face'
+    springs.loc[(springs.z1 == springs.z2), 'type'] = 'inplane'
+
+    return (balls, springs)
+
+
+def update_springs(springs, ball_positions, compute_lo=False):
+    springs_ball1s = ball_positions.loc[pd.Series.tolist(springs.ball1)]
+    springs_ball1s.columns = ['x1', 'y1', 'z1']
+    springs_ball1s.reset_index(drop=True, inplace=True)
+    springs.loc[:, ['x1', 'y1', 'z1']] = springs_ball1s
+
+    springs_ball2s = ball_positions.loc[pd.Series.tolist(springs.ball2)]
+    springs_ball2s.columns = ['x2', 'y2', 'z2']
+    springs_ball2s.reset_index(drop=True, inplace=True)
+    springs.loc[:, ['x2', 'y2', 'z2']] = springs_ball2s
+
+    # change the l1 and dls for the springs
+    springs_ball1s.columns = ['x', 'y', 'z']
+    springs_ball2s.columns = ['x', 'y', 'z']
+    disp = [springs_ball2s.x-springs_ball1s.x, springs_ball2s.y -
+            springs_ball1s.y, springs_ball2s.z-springs_ball1s.z]
+    length = disp[0]**2+disp[1]**2+disp[2]**2
+    length = length.apply(lambda row: math.sqrt(row))
+    springs.l1 = length
+
+    if compute_lo:
+        springs.l0 = springs.l1
+    springs.dl = springs.l1-springs.l0
+
+    return (springs)
+
+
+def df_from_pointcloud(balls, k=1, ns=1):
+
+    # takes a pointcloud and returns a dataframe with the points and connections
+    # balls : pandas dataframe with x,y,z
+
+    balls["neighbours"] = [[] for _ in range(len(balls))]
+    springs = pd.DataFrame(columns=['ID', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2', 'k', 'l0', 'l1', 'dl',
+                                    'ball1', 'ball2', 'viscoelastic_coeff'])
+
+    # delunay triangulation used to connect the balls into triangles
+    try:
+        tri = Delaunay(balls[['x', 'y', 'z']].values)
+    except:
+        tri = Delaunay(balls[['x', 'y']].values)
+
+    # iterate through simplexes and save connections as springs
+    # could potentially be done without the horrifying nested loops but not sure how atm
+    for simplex in tri.simplices:
+        for point in simplex:
+            for neighbour in simplex[simplex != point]:
+                # check whether the connection has already been saved,
+                # if not, add it as a spring
+                if (balls.loc[point, 'neighbours'].count(neighbour) == 0):
+                    balls.loc[point, 'neighbours'].append(neighbour)
+                    balls.loc[neighbour, 'neighbours'].append(point)
+
+                    spring_id = springs.shape[0]
+
+                    # balls.loc[point, 'spring1'].append(spring_id)
+                    # balls.loc[neighbour, 'spring2'].append(spring_id)
+
+                    length = np.sqrt(sum(np.square(balls.loc[point, ['x', 'y', 'z']].values -
+                                                   balls.loc[neighbour, ['x', 'y', 'z']].values)))
+
+                    row = pd.DataFrame([[spring_id] +
+                                        list(balls.loc[point, ['x', 'y', 'z']].values) +
+                                        list(balls.loc[neighbour, ['x', 'y', 'z']].values) +
+                                       [k, length, length, 0, point, neighbour, ns]])
+
+                    row.columns = springs.columns
+                    springs = pd.concat([springs, row])
+                    springs.index = range(springs.shape[0])
+
+    # update spring types as either face (default) or inplane
+    # if z1 == z2
+    # springs['type'] = 'face'
+    # springs.loc[(springs.z1 == springs.z2), 'type'] = 'inplane'
+
+    return balls, springs
