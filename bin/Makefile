@@ -1,7 +1,7 @@
 include /usr/local/openfpm/source/.openfpm.mk
 
 CC=mpic++
-
+CFLAGS=-Wl, -ldclassic
 LDIR =
 
 OBJ = Active2d.o
