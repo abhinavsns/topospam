@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
     // const int nbs_max  = nbs_m;
 
     std::cout << "dt " << dt << "\n";
-    std::cout << "tf " << tf << "\n";
+    // std::cout << "tf " << tf << "\n";
     std::cout << "save_csv " << save_csv << "\n";
     std::cout << "save_vtk " << save_vtk << "\n";
     std::cout << "dim " << dim << "\n";
@@ -442,7 +442,7 @@ int main(int argc, char *argv[])
     // while(t<=tf){
     while (avg_movement > tol)
     {
-
+        // std::cout << "Counter : " << ctr << std::endl;
         // double f_av = 0;
         // double d_av = 0;
 
@@ -506,16 +506,15 @@ int main(int argc, char *argv[])
 
         // only gives position, if we use any other properties
         // need to do ghost_get<prop1,prop2>
-        if (ctr % 1000 == 0)
-        {
-            ModelCustom md;
-            particles.addComputationCosts(md);
-            particles.getDecomposition().decompose();
-            particles.map();
-            particles.ghost_get<>();
-
-            reconnect(particles);
-        }
+        // if (ctr % 1000 == 0)
+        // {
+        //     ModelCustom md;
+        //     particles.addComputationCosts(md);
+        //     particles.getDecomposition().decompose();
+        //     particles.map();
+        //     particles.ghost_get<>();
+        //     reconnect(particles);
+        // }
 
         particles.ghost_get<>(SKIP_LABELLING);
 
