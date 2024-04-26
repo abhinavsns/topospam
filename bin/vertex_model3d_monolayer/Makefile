@@ -1,14 +1,5 @@
+include monolayer.mk
 EXECUTABLE = organoid
-
-INCS = -I src/ -I examples/ -I build/ -I./src/eigen-3.4.0 -I/usr/local/openfpm/dependencies/BOOST/include -I/usr/local/Cellar/gsl/2.7.1/include/ -I/opt/homebrew/include
-
-FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -fopenmp -g -Wl -ld_classic
-
-LIBS = -lgsl -lboost_iostreams -lboost_program_options # -lboost_program_options
-
-LIBPATH = -L/usr/local/openfpm/dependencies/BOOST/lib -L/usr/local/Cellar/gsl/2.7.1/lib -L/opt/homebrew/Cellar/gsl/2.7.1/lib -L/opt/homebrew/lib
-
-COMP = /usr/local/openfpm/dependencies/MPI/bin/mpic++
 
 HEADERS = src/tools.hpp
 
@@ -36,9 +27,9 @@ debug: FLAGS += -g -DDEBUG -ggdb3
 
 debug: all
 
-splat: SPLATLIBS = /usr/local/openfpm/dependencies/BOOST/lib/libboost_program_options.a
+#splat: SPLATLIBS = /usr/local/openfpm/dependencies/BOOST/lib/libboost_program_options.a
 
-splat: LIBPATH += -L/usr/local/boost_1_82_0
+#splat: LIBPATH += -L/usr/local/boost_1_82_0
 
 splat: directories $(EXECUTABLE)
 
@@ -54,7 +45,7 @@ build/%.o: src/%.cpp src/%.hpp src/header.hpp.gch
 	$(COMP) -c $< -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
 
 $(EXECUTABLE): examples/$(EXECUTABLE).cpp $(BASE) $(HEADERS)
-	$(COMP) $^ -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS) $(SPLATLIBS)
+	$(COMP) $^ -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS) 
 
 clean:
 	rm -f build/*.o

@@ -11,43 +11,37 @@ class InstallOpenFPM(install):
         try:
             arch = platform.machine()
             if sys.platform == "darwin":  # macOS
-                print("Please make sure homebrew is installed on your system (https://brew.sh/). With homebrew, we will install gsl and gcc@12.")
-                subprocess.check_call(['brew', 'install', 'gsl'])
-                subprocess.check_call(['brew', 'install', 'gcc@12'])
-                subprocess.check_call(['brew', 'install', 'libx11'])
-                subprocess.check_call(['brew', 'install', 'ffmpeg'])
+                print("Please make sure homebrew is installed on your system (https://brew.sh/). TopoSPAM utilizes Homebrew for installation of the C++ backend libraries.")
                 print(
                     "Please make sure command line tools or Xcode is installed on your system (xcode select --install).")
-                if arch == "arm64":
-                    pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-arm64-gcc12.pkg"
-                elif arch == "x86_64":
-                    pkg_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Darwin-x86_64.pkg"
-                else:
-                    print("Unsupported architecture")
-                    sys.exit(1)
-                subprocess.check_call(
-                    ['wget', '-O', './bin/openfpm.pkg', pkg_url])
-                print("Sudo password is required to install OpenFPM.\n")
-                subprocess.check_call(
-                    ['sudo', 'installer', '-pkg', './bin/openfpm.pkg', '-target', '/'])
+                subprocess.check_call(['brew', 'install', 'gsl'])
+                subprocess.check_call(['brew', 'install', 'gcc'])
+                subprocess.check_call(['brew', 'install', 'ffmpeg'])
+                subprocess.check_call(['brew', 'install','--HEAD-only', 'abhinavsns/homebrew-openfpm/openfpm'])                
+                subprocess.check_call(['brew', 'install', 'hdf5'])
+                subprocess.check_call(['brew', 'unlink', 'hdf5'])
+                subprocess.check_call(['brew', 'tap', 'abhinavsns/homebrew-openfpm'])
             elif sys.platform == "linux":  # Linux (assuming Ubuntu for .deb)
                 deb_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Linux-x86_64.deb"
             else:
                 print("Unsupported platform. We only support macOS and Linux.")
                 sys.exit(1)
-
+            subprocess.check_call(
+                    ['chmod','+x','./createbrewenv.sh'])
+            subprocess.check_call(
+                    ['./createbrewenv.sh'])
             make_dir = os.path.join(os.path.dirname(
                 os.path.abspath(__file__)), 'bin')
             subprocess.check_call(
-                [f'source /usr/local/openfpm/source/openfpm_vars && make all'], shell=True, cwd=make_dir)
+                [f'make all'], shell=True, cwd=make_dir)
 
             make_dir2 = os.path.join(os.path.dirname(
                 os.path.abspath(__file__)), 'bin/vertex_model3d_monolayer')
             subprocess.check_call(
-                [f'source /usr/local/openfpm/source/openfpm_vars && make all'], shell=True, cwd=make_dir2)
+                [f'make all'], shell=True, cwd=make_dir2)
 
         except Exception as e:
-            print(f"Error during installation of OpenFPM: {e}")
+            print(f"Error during installation of C++ OpenFPM Backend: {e}")
             sys.exit(1)
 
         # Call the parent class's run method at the end

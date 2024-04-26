@@ -1,13 +1,14 @@
 //
 // Created by Abhinav Singh on 15.03.20.
 //
-#include "config.h"
+//#include "config.h"
 #define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
 #define BOOST_MPL_LIMIT_VECTOR_SIZE 40
 #include <iostream>
+#include "Vector/vector_dist_subset.hpp"
+#include "Operators/Vector/vector_dist_operators.hpp"
 #include "DCPSE/DCPSE_op/DCPSE_op.hpp"
 #include "DCPSE/DCPSE_op/DCPSE_Solver.hpp"
-#include "Operators/Vector/vector_dist_operators.hpp"
 #include "Vector/vector_dist_subset.hpp"
 #include "DCPSE/DCPSE_op/EqnsStruct.hpp"
 #include "OdeIntegrators/OdeIntegrators.hpp"
