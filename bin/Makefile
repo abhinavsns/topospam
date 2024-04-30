@@ -1,7 +1,7 @@
-include ~/example.mk
+include ./example.mk
 
 CC=mpic++
-CFLAGS=-Wl, -ldclassic
+CFLAGS=-Wl,-ld_classic
 LDIR =
 
 OBJ = Active2d.o

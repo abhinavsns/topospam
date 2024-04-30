@@ -54,11 +54,14 @@ if [ x"$cuda_on_cpu" == x"YES" ]; then
 fi
 echo "CUDA_ON_CPU=$CUDA_ON_CPU" >> ./bin/example.mk
 
+INCS="-I./src/ -I./examples/ -I./build/ -I./src/eigen-3.4.0 " 
+
 add_dependency_paths_monolayer() {
   local dep_prefix_monolayer=$(brew --prefix $1)
 
   # Include paths
   #if [ -d "$dep_prefix_monolayer/include" ]; then
+  
     INCS="$INCS -I$dep_prefix_monolayer/include"
   #fi
   
@@ -78,7 +81,7 @@ done
 echo "INCS=$INCS" > ./bin/vertex_model3d_monolayer/monolayer.mk
 echo "LIBPATH=$LIBPATH" >> ./bin/vertex_model3d_monolayer/monolayer.mk
 
-echo "FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -fopenmp -g -Wl,-ld_classic" >> ./bin/vertex_model3d_monolayer/monolayer.mk
+echo "FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -g -Wl,-ld_classic" >> ./bin/vertex_model3d_monolayer/monolayer.mk
 
 echo "LIBS = -lgsl -lboost_iostreams -lboost_program_options # -lboost_program_options" >> ./bin/vertex_model3d_monolayer/monolayer.mk
 

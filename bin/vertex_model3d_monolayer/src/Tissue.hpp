@@ -15,7 +15,7 @@
 
 #define THREE_DIMENSIONS 0
 
-#define PRALLEL 1
+//#define PRALLEL 0
 
 #if PRALLEL
 	#include <parallel/algorithm>

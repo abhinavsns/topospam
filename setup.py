@@ -10,19 +10,17 @@ class InstallOpenFPM(install):
     def run(self):
         try:
             arch = platform.machine()
-            if sys.platform == "darwin":  # macOS
+            if sys.platform == "darwin" or sys.platform == "linux":  # macOS
                 print("Please make sure homebrew is installed on your system (https://brew.sh/). TopoSPAM utilizes Homebrew for installation of the C++ backend libraries.")
                 print(
-                    "Please make sure command line tools or Xcode is installed on your system (xcode select --install).")
+                    "For MacOS: Please make sure command line tools or Xcode is installed on your system ($xcode select --install).")
                 subprocess.check_call(['brew', 'install', 'gsl'])
                 subprocess.check_call(['brew', 'install', 'gcc'])
                 subprocess.check_call(['brew', 'install', 'ffmpeg'])
-                subprocess.check_call(['brew', 'install','--HEAD-only', 'abhinavsns/homebrew-openfpm/openfpm'])                
-                subprocess.check_call(['brew', 'install', 'hdf5'])
                 subprocess.check_call(['brew', 'unlink', 'hdf5'])
+                subprocess.check_call(['brew', 'unlink', 'hdf5-mpi'])
                 subprocess.check_call(['brew', 'tap', 'abhinavsns/homebrew-openfpm'])
-            elif sys.platform == "linux":  # Linux (assuming Ubuntu for .deb)
-                deb_url = "https://github.com/mosaic-group/openfpm_pdata/releases/download/v4.1.0/openfpm-4.1.0-Linux-x86_64.deb"
+                subprocess.check_call(['brew', 'install','--HEAD', 'abhinavsns/homebrew-openfpm/openfpm'])                
             else:
                 print("Unsupported platform. We only support macOS and Linux.")
                 sys.exit(1)

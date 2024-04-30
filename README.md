@@ -3,7 +3,7 @@ Topological Simulation Platform for Active Matter
 # Installation
 We support Linux and MacOS. 
 
-On MacOS you need XCode command line tools, and Homebrew (installation details: https://brew.sh/) for gcc@12 and gsl.
+On MacOS you need XCode command line tools, and Homebrew (installation details: https://brew.sh/) for openFPM and gsl.
 
 For the installation,
 first clone the repository:
@@ -35,10 +35,6 @@ python -m ipykernel install --user --name=TopoSPAM_env
 
 Encountering compilation errors:
 
-On MacOS, the system configuration differes for everyone and hence the installation might fail.
+On MacOS, the system configuration can differ for everyone and hence the installation might fail.
 If for some reason you get compilation errors, it can be due an older or incompatible Xcode toolchain. 
-If you use Xcode, please change to the Xcode 14 toolchain.
-For command line tools, please complete remove the command line tools and
-manually install commandline tools 14.3.1:
-https://download.developer.apple.com/Developer_Tools/Command_Line_Tools_for_Xcode_14.3.1/Command_Line_Tools_for_Xcode_14.3.1.dmg
-after this you should run `brew update` & `brew reinstall gcc gcc@12`
+If you use Xcode, please update to the latest toolchain.
