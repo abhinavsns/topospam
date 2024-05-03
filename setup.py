@@ -17,10 +17,12 @@ class InstallOpenFPM(install):
                 subprocess.check_call(['brew', 'install', 'gsl'])
                 subprocess.check_call(['brew', 'install', 'gcc'])
                 subprocess.check_call(['brew', 'install', 'ffmpeg'])
+                subprocess.check_call(['brew', 'install', 'hdf5'])
                 subprocess.check_call(['brew', 'unlink', 'hdf5'])
+                subprocess.check_call(['brew', 'install', 'hdf5-mpi'])
                 subprocess.check_call(['brew', 'unlink', 'hdf5-mpi'])
                 subprocess.check_call(['brew', 'tap', 'abhinavsns/homebrew-openfpm'])
-                subprocess.check_call(['brew', 'install','--HEAD', 'abhinavsns/homebrew-openfpm/openfpm'])                
+                subprocess.check_call(['brew', 'install','-s', 'abhinavsns/homebrew-openfpm/openfpm'])
             else:
                 print("Unsupported platform. We only support macOS and Linux.")
                 sys.exit(1)

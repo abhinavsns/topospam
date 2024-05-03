@@ -31,10 +31,11 @@ bin/SpringLatticeOutput
 *.tmp
 *.bak
 *.swp
-
+*.*vtp
 # Ignore system files
 .DS_Store
 Thumbs.db
 
 # Folder where you can keep some other things locally
 Only_local
+

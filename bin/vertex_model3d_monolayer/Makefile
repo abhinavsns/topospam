@@ -1,56 +1,50 @@
 include monolayer.mk
+
 EXECUTABLE = organoid
-
-HEADERS = src/tools.hpp
-
-BASE = \
-			 build/options.o \
-			 build/Vertex.o \
-       build/Edge.o \
-			 build/Triangle.o \
-       build/Cell.o \
-       build/Tissue.o
-
-#
-
-OUT_DIR = build/
-
+OUT_DIR = .
 MKDIR_P = mkdir -p
 
-.PHONY: all clean cleanall directories debug splat
+# Compiler settings
+COMP = mpic++  # Ensure this is set to clang++ if using Clang
+FLAGS = -Wall -Wextra -Wpedantic -std=c++20
+INCS = -I src/ -I examples/ -I$(OUT_DIR) -I./src/eigen-3.4.0 -I/usr/local/opt/boost/include -I/usr/local/opt/libomp/include -I/usr/local/opt/gsl/include -I/usr/local/include
+LIBPATH = -L/usr/local/opt/boost/lib -L/usr/local/opt/libomp/lib -L/usr/local/opt/gsl/lib -L/usr/local/lib
+LIBS = -lgsl -lboost_iostreams -lboost_program_options -lgslcblas -lm
 
-all: LIBS += -lboost_program_options -lgsl -lgslcblas -lm
+HEADERS = src/tools.hpp
+BASE = \
+		 $(OUT_DIR)/options.o \
+		 $(OUT_DIR)/Vertex.o \
+		 $(OUT_DIR)/Edge.o \
+		 $(OUT_DIR)/Triangle.o \
+		 $(OUT_DIR)/Cell.o \
+		 $(OUT_DIR)/Tissue.o
+
+.PHONY: all clean cleanall directories debug
 
 all: directories $(EXECUTABLE)
 
 debug: FLAGS += -g -DDEBUG -ggdb3
-
 debug: all
 
-#splat: SPLATLIBS = /usr/local/openfpm/dependencies/BOOST/lib/libboost_program_options.a
+directories: $(OUT_DIR)
 
-#splat: LIBPATH += -L/usr/local/boost_1_82_0
+$(OUT_DIR):
+	$(MKDIR_P) $@
 
-splat: directories $(EXECUTABLE)
+$(OUT_DIR)/%.o: src/%.cpp src/%.hpp src/header.hpp.gch
+	$(COMP) -c $< -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
 
-directories: ${OUT_DIR}
-
-${OUT_DIR}:
-	${MKDIR_P} ${OUT_DIR}
+$(EXECUTABLE): $(BASE) examples/$(EXECUTABLE).cpp
+	$(COMP) examples/$(EXECUTABLE).cpp $(BASE) -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
 
 src/header.hpp.gch: src/header.hpp
-	$(COMP) -c $< -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
-
-build/%.o: src/%.cpp src/%.hpp src/header.hpp.gch
-	$(COMP) -c $< -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
-
-$(EXECUTABLE): examples/$(EXECUTABLE).cpp $(BASE) $(HEADERS)
-	$(COMP) $^ -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS) 
+	$(COMP) -x c++-header -o $@ $< $(INCS) $(FLAGS)
 
 clean:
-	rm -f build/*.o
+	rm -f $(OUT_DIR)/*.o
 
 cleanall: clean
-	rm -rf build/
+	rm -rf $(OUT_DIR)
 	rm -rf src/header.hpp.gch
-	rm $(EXECUTABLE)
+	rm -f $(EXECUTABLE)

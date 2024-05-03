@@ -5,15 +5,15 @@ add_dependency_paths() {
   local dep_prefix=$(brew --prefix $1)
 
   # Include paths
-  #if [ -d "$dep_prefix/include" ]; then
+  if [ -d "$dep_prefix/include" ]; then
     INCLUDE_PATH="$INCLUDE_PATH -I$dep_prefix/include"
-  #fi
+  fi
   
   # Library paths
-  #if [ -d "$dep_prefix/lib" ]; then
+  if [ -d "$dep_prefix/lib" ]; then
     LIBS_PATH="$LIBS_PATH -L$dep_prefix/lib"
     # Add library link flags as necessary. You might need a specific approach to determine the library names.
-  #fi
+  fi
 }
 
 # Initialize variables
