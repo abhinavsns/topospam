@@ -1,10 +1,10 @@
 #ifndef BOND_INLINE_H
 #define BOND_INLINE_H
-
 #include <math.h>
 #include <vector>
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
+#include "tools.hpp"
 
 using Eigen::Matrix2d;
 using Eigen::Matrix3d;

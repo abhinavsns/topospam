@@ -1,70 +1,67 @@
 EXECUTABLE = analyze
-
-INCS = -I src/ -I./../src/ -I examples/ -I build/ -I./../src/eigen-3.4.0
-
-FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -fopenmp -g
-
-LIBS = # -lboost_program_options
-
-LIBPATH =
-
-COMP = g++
-
-HEADERS = ./../src/tools.hpp
-
-BASE = \
-			 build/analyze_options.o \
-			 build/Writer.o \
-			 build/Vertex.o \
-			 build/Triangle.o \
-       build/Edge.o \
-       build/Cell.o \
-			 build/Triangulation.o \
-       build/Tissue.o
-
-#
-
-OUT_DIR = build/
-
+OUT_DIR = ..
 MKDIR_P = mkdir -p
 
-.PHONY: all clean cleanall directories debug splat
+# Specify the compiler
+COMP = mpic++
 
-all: LIBS += -lboost_program_options -lgsl -lgslcblas -lm
+# Flags for compilation
+FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -g
 
+# Include directories
+INCS = -I src/ -I../src/ -I examples/ -I $(OUT_DIR) -I../src/eigen-3.4.0
+
+# Libraries and library paths
+LIBPATH = -L$(shell brew --prefix boost)/lib -L$(shell brew --prefix libomp)/lib -L$(shell brew --prefix gsl)/lib -L/usr/local/lib
+LIBS = -lgsl -lboost_iostreams -lboost_program_options -lgslcblas -lm
+
+# Header files
+HEADERS = ../src/tools.hpp
+
+# Object files
+BASE = \
+    $(OUT_DIR)/analyze_options.o \
+    $(OUT_DIR)/Writer.o \
+    $(OUT_DIR)/Vertex.o \
+    $(OUT_DIR)/Triangle.o \
+    $(OUT_DIR)/Edge.o \
+    $(OUT_DIR)/Cell.o \
+    $(OUT_DIR)/Triangulation.o \
+    $(OUT_DIR)/Tissue.o
+
+.PHONY: all clean cleanall directories debug
+
+# Main targets
 all: directories $(EXECUTABLE)
 
 debug: FLAGS += -g -DDEBUG -ggdb3
-
 debug: all
 
-splat: SPLATLIBS = /usr/local/boost/1.75/lib/libboost_program_options.a
+directories: $(OUT_DIR) $(OUT_DIR)/accessories
 
-splat: LIBPATH += -L/usr/local/boost_1_75_0
+$(OUT_DIR) $(OUT_DIR)/accessories:
+	$(MKDIR_P) $@
 
-splat: directories $(EXECUTABLE)
-
-directories: ${OUT_DIR}
-
-${OUT_DIR}:
-	${MKDIR_P} ${OUT_DIR}
-
-src/header.hpp.gch: ./../src/header.hpp
+# General rule for building objects
+$(OUT_DIR)/%.o: src/%.cpp src/%.hpp src/header.hpp.gch
 	$(COMP) -c $< -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
 
-build/%.o: src/%.cpp src/%.hpp src/header.hpp.gch
+$(OUT_DIR)/accessories/%.o: src/accessories/%.cpp src/accessories/%.hpp src/header.hpp.gch
 	$(COMP) -c $< -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
 
-build/%.o: ./../src/%.cpp ./../src/%.hpp src/header.hpp.gch
-	$(COMP) -c $< -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
+# Precompile the header
+src/header.hpp.gch: ../src/header.hpp
+	$(COMP) -x c++-header -o $@ $< $(INCS) $(FLAGS)
 
+# Linking
 $(EXECUTABLE): examples/$(EXECUTABLE).cpp $(BASE) $(HEADERS)
-	$(COMP) $^ -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS) $(SPLATLIBS)
+	$(COMP) $< $(BASE) -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
 
+# Cleaning up
 clean:
-	rm -f build/*.o
+	rm -f $(OUT_DIR)/*.o $(OUT_DIR)/accessories/*.o analyze
 
 cleanall: clean
-	rm -rf build/
-	rm -rf src/header.hpp.gch
-	rm $(EXECUTABLE)
+	rm -rf $(OUT_DIR)
+	rm -f src/header.hpp.gch
+	rm -f $(EXECUTABLE)
