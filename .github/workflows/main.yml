@@ -1,20 +1,17 @@
-name: TopoSPAM
+name: Build, Test, and Publish
 
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
-    branches:
-      - main
 
 jobs:
-  build:
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-
+        os: [ubuntu-latest, macos-latest, macos-13]
     steps:
     - name: Check out repository
       uses: actions/checkout@v2
@@ -24,20 +21,47 @@ jobs:
       with:
         python-version: '3.8'
 
-    - name: Set up Homebrew
-      uses: Homebrew/actions/setup-homebrew@master
-
     - name: Create and activate virtual environment
       run: |
-        python -m venv venv
+        python3 -m venv venv
         source venv/bin/activate
 
     - name: Install dependencies
       run: |
         source venv/bin/activate
-        pip install .
+        pip3 install .
 
     - name: Test the package
       run: |
         source venv/bin/activate
-        # pytest tests/
+        #pytest to come
+
+  docker-publish:
+    needs: test
+    runs-on: ubuntu-latest  # Docker actions are run on Linux
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v1
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ghcr.io/${{ github.repository }}/myapp:latest
+
+    - name: Verify the Docker image
+      run: |
+        docker pull ghcr.io/${{ github.repository }}/myapp:latest
+        docker run ghcr.io/${{ github.repository }}/myapp:latest

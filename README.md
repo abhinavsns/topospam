@@ -1,11 +1,28 @@
 # TopoSPAM
 Topological Simulation Platform for Active Matter
 # Installation
-We support Linux and MacOS. 
+We support Linux and MacOS.
+## Dependencies
+Both systems require a Homebrew installation.
+For Brew on Linux, you need basic tools:
+```bash
+apt-get update
+```
+```bash
+apt-get install build-essential procps curl file git
+```
+On MacOS, you need XCode command line tools:
+```bash
+xcode-select -install
+```
 
-On MacOS you need XCode command line tools, and Homebrew (installation details: https://brew.sh/) for openFPM and gsl.
-
-For the installation,
+Afterwards, Homebrew can be installed as also described at https://brew.sh/:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+Please make sure to follow the instruction at the end of the brew installation to add it to your path.
+## TopoSPAM
+For the TopoSPAM installation,
 first clone the repository:
 ```bash
 git clone https://github.com/abhinavsns/TopoSPAM.git
@@ -14,17 +31,20 @@ Enter the repo:
 ```bash
 cd TopoSPAM
 ```
-Create a virtualenv and activate it:
+Create a python3.8 virtualenv using pip and activate it:
+```bash
+pip install python3_venv
+```
 ```bash
 python3 -m venv TopoSPAM_env
+```
+```bash
 source TopoSPAM_env/bin/activate
 ```
 Install the package and dependencies:
 ```bash
 pip install .
 ```
-This command requires sudo password as it installs openfpm binaries required by the package in /usr/local/openfpm
-It further compiles the C++ source codes of the examples located inside bin/
 
 One can then launch the jupyter notebook and set the path of the repository as shown in the examples.
 
@@ -33,8 +53,19 @@ The virtual environment can be made avialable to jupyter notebook by:
 python -m ipykernel install --user --name=TopoSPAM_env
 ```
 
-Encountering compilation errors:
+It is important to set the repo path correctly in the notebook for TopoSPAM to find the relevant binaries.
 
-On MacOS, the system configuration can differ for everyone and hence the installation might fail.
-If for some reason you get compilation errors, it can be due an older or incompatible Xcode toolchain. 
-If you use Xcode, please update to the latest toolchain.
+# Encountering errors:
+Please check the issues section and FAQs below before creating a new issue.
+
+If you encouter new problems, Please create an issue in this repository explaining the issue with the output of the error message. We will try our best to help you.
+
+The system configuration can differ for everyone and hence the installation might fail due to the dependencies and not TopoSPAM. 
+
+## FAQs
+
+1) `Error: Too many files open`  This error can occur if your system has less memory or a lower ulimit while installation. A simple workaround is to run the installation again.
+
+2) On MacOS, if you get compilation errors, it can be due an older or incompatible Xcode toolchain. Please update to the latest Xcode toolchain.
+
+3) On Linux, homebrew is not so well supported and hence you may encounter issues with compilation that can be due to conflicting dependencies and so on. Please choose the docker option to avoid issues.

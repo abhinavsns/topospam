@@ -14,6 +14,7 @@ class InstallOpenFPM(install):
                 print("Please make sure homebrew is installed on your system (https://brew.sh/). TopoSPAM utilizes Homebrew for installation of the C++ backend libraries.")
                 print(
                     "For MacOS: Please make sure command line tools or Xcode is installed on your system ($xcode select --install).")
+                subprocess.check_call(['brew', 'install', 'ninja'])
                 subprocess.check_call(['brew', 'install', 'gsl'])
                 subprocess.check_call(['brew', 'install', 'gcc'])
                 subprocess.check_call(['brew', 'install', 'ffmpeg'])
@@ -37,6 +38,11 @@ class InstallOpenFPM(install):
 
             make_dir2 = os.path.join(os.path.dirname(
                 os.path.abspath(__file__)), 'bin/vertex_model3d_monolayer')
+            subprocess.check_call(
+                [f'make all'], shell=True, cwd=make_dir2)
+            
+            make_dir3 = os.path.join(os.path.dirname(
+                os.path.abspath(__file__)), 'bin/vertex_model3d_monolayer/accesories')
             subprocess.check_call(
                 [f'make all'], shell=True, cwd=make_dir2)
 
@@ -66,7 +72,7 @@ setup(
         'pandas',
         'scipy',
         'networkx',
-        'pyvista',
+        'pyvista',        
     ],
     author='Abhinav Singh',
     description='TopoSPAM',
