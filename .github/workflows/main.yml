@@ -20,6 +20,9 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.8'
+    
+    - name: Set up Homebrew
+      uses: Homebrew/actions/setup-homebrew@master    
 
     - name: Create and activate virtual environment
       run: |
