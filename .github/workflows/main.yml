@@ -29,7 +29,7 @@ jobs:
     - name: Install dependencies
       run: |
         source venv/bin/activate
-        pip3 install .
+        pip3 install . -v
 
     - name: Test the package
       run: |
