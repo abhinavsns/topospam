@@ -81,7 +81,7 @@ done
 echo "INCS=$INCS" > ./bin/vertex_model3d_monolayer/monolayer.mk
 echo "LIBPATH=$LIBPATH" >> ./bin/vertex_model3d_monolayer/monolayer.mk
 
-echo "FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -g -Wl,-ld_classic" >> ./bin/vertex_model3d_monolayer/monolayer.mk
+echo "FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -g >> ./bin/vertex_model3d_monolayer/monolayer.mk
 
 echo "LIBS = -lgsl -lboost_iostreams -lboost_program_options # -lboost_program_options" >> ./bin/vertex_model3d_monolayer/monolayer.mk
 
