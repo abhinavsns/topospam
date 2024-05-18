@@ -5,9 +5,9 @@ OUT_DIR = .
 MKDIR_P = mkdir -p
 
 # Compiler settings
-COMP = mpic++  # Ensure this is set to clang++ if using Clang
+COMP = g++  # Ensure this is set to clang++ if using Clang
 FLAGS = -Wall -Wextra -Wpedantic -std=c++20
-INCS = -I src/ -I examples/ -I$(OUT_DIR) -I./src/eigen-3.4.0 -I$(shell brew --prefix boost)/include -I$(shell brew --prefix libomp)/include -I$(shell brew --prefix gsl)/include -I/usr/local/include
+INCS = -I/src/ -I/examples/ -I$(OUT_DIR) -I./src/eigen-3.4.0 -I$(shell brew --prefix boost)/include -I$(shell brew --prefix libomp)/include -I$(shell brew --prefix gsl)/include -I/usr/local/include
 LIBPATH = -L$(shell brew --prefix boost)/lib -L$(shell brew --prefix libomp)/lib -L$(shell brew --prefix gsl)/lib -L/usr/local/lib
 LIBS = -lgsl -lboost_iostreams -lboost_program_options -lgslcblas -lm
 
@@ -39,7 +39,7 @@ $(EXECUTABLE): $(BASE) examples/$(EXECUTABLE).cpp
 	$(COMP) examples/$(EXECUTABLE).cpp $(BASE) -o $@ $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
 
 src/header.hpp.gch: src/header.hpp
-	$(COMP) -x c++-header -o $@ $< $(INCS) $(FLAGS)
+	$(COMP) -x c++-header $< -o $@ $(INCS) $(FLAGS)
 
 clean:
 	rm -f $(OUT_DIR)/*.o

@@ -3,7 +3,7 @@ OUT_DIR = ..
 MKDIR_P = mkdir -p
 
 # Specify the compiler
-COMP = mpic++
+COMP = g++
 
 # Flags for compilation
 FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -g
