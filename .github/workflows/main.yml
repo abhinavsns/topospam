@@ -39,7 +39,7 @@ jobs:
         source venv/bin/activate
         #pytest to come
 
-  docker-publish:
+docker-publish:
     needs: test
     runs-on: ubuntu-latest  # Docker actions are run on Linux
     steps:
@@ -62,9 +62,9 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: ghcr.io/${{ github.repository }}/myapp:latest
+        tags: ghcr.io/${{ github.repository_owner }}/${{ github.repository }}/myapp:latest
 
     - name: Verify the Docker image
       run: |
-        docker pull ghcr.io/${{ github.repository }}/myapp:latest
-        docker run ghcr.io/${{ github.repository }}/myapp:latest
+        docker pull ghcr.io/${{ github.repository_owner }}/${{ github.repository }}/myapp:latest
+        docker run ghcr.io/${{ github.repository_owner }}/${{ github.repository }}/myapp:latest
