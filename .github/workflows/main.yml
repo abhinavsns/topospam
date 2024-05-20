@@ -39,7 +39,7 @@ jobs:
         source venv/bin/activate
         #pytest to come
 
-docker-publish:
+  docker-publish:
     needs: test
     runs-on: ubuntu-latest  # Docker actions are run on Linux
     steps:
