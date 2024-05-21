@@ -1,4 +1,4 @@
-#! /cpp/bash
+#! /bin/bash
 
 # Function to find and add a dependency's include and lib paths
 add_dependency_paths() {
