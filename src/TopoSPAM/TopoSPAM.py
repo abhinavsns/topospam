@@ -74,7 +74,7 @@ class ActiveFluid2D:
     
     def RunSimulation(self,nCores=1):
         global repo_path
-        SimParams=self.params
+        SimParams=self.params.get()
         np.savetxt(repo_path+'/cpp/active2d.csv', SimParams, delimiter=' ')
         output_dir = os.path.join(repo_path, 'cpp', 'Active2dOutput')
 
@@ -542,7 +542,7 @@ class VertexModel:
         
     def __init__(self):
         self.params = self.Params()
-        self.anaparams = self.AnalyzeParams()
+        self.analyzeParams = self.AnalyzeParams()
 
 
     def RunSimulation(self, nThreads=1):
@@ -596,7 +596,7 @@ class VertexModel:
     
     def AnalyzeData(self, nThreads=1):
         global repo_path
-        AnaParams=self.anaparams
+        AnaParams=self.analyzeParams
         with open(os.path.join(repo_path, 'cpp', 'VertexModelAnalyze.dat'), 'w') as f:
             for attr in dir(AnaParams):
                 if not attr.startswith('__'):
@@ -604,13 +604,13 @@ class VertexModel:
         output_dir = os.path.join(repo_path, 'cpp', 'VertexModelOutput')
     
         # Check if the directory exists
-        if not os.path.exists(output_dir):
+        if not os.path.exists(output_dir+'/output/frame_0.json'):
             print("Please run the simulation first")
             return
 
         cmd = [
             "/bin/bash", "-c",
-            "../vertex_model3d_monolayer/accessories/analyze ../VertexModel.dat"
+            "../vertex_model3d_monolayer/accessories/analyze ../VertexModelAnalyze.dat -d ./output -o ./outputAnalyze"
         ]
         try:
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=output_dir)
@@ -628,5 +628,5 @@ class VertexModel:
 
         except Exception as e:
             print(f"Failed to run command: {e}")
-        return int(output_lines[-1].split()[-1])
+        return 
 
