@@ -31,19 +31,19 @@ class InstallOpenFPM(install):
             subprocess.check_call(
                     ['./createbrewenv.sh'])
             make_dir = os.path.join(os.path.dirname(
-                os.path.abspath(__file__)), 'bin')
+                os.path.abspath(__file__)), 'cpp')
             subprocess.check_call(
                 [f'make all'], shell=True, cwd=make_dir)
 
             make_dir2 = os.path.join(os.path.dirname(
-                os.path.abspath(__file__)), 'bin/vertex_model3d_monolayer')
+                os.path.abspath(__file__)), 'cpp/vertex_model3d_monolayer')
             subprocess.check_call(
                 [f'make all'], shell=True, cwd=make_dir2)
             
             make_dir3 = os.path.join(os.path.dirname(
-                os.path.abspath(__file__)), 'bin/vertex_model3d_monolayer/accesories')
+                os.path.abspath(__file__)), 'cpp/vertex_model3d_monolayer/accesories')
             subprocess.check_call(
-                [f'make all'], shell=True, cwd=make_dir2)
+                [f'make all'], shell=True, cwd=make_dir3)
 
         except Exception as e:
             print(f"Error during installation of C++ OpenFPM Backend: {e}")

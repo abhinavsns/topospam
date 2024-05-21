@@ -20,9 +20,10 @@ node_modules/
 # Ignore compiled code
 dist/
 build/
-bin/Active2dOutput
-bin/SpringLatticeOutput
-#bin
+cpp/Active2dOutput
+cpp/SpringLatticeOutput
+cpp/VertexModelOutput
+#cpp
 
 # Ignore log files
 *.log
