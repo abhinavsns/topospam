@@ -23,6 +23,7 @@ build/
 cpp/Active2dOutput
 cpp/SpringLatticeOutput
 cpp/VertexModelOutput
+*_env
 #cpp
 
 # Ignore log files
@@ -33,6 +34,7 @@ cpp/VertexModelOutput
 *.bak
 *.swp
 *.*vtp
+*.*vtk
 # Ignore system files
 .DS_Store
 Thumbs.db

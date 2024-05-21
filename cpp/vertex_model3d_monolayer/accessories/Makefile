@@ -51,7 +51,7 @@ $(OUT_DIR)/accessories/%.o: src/accessories/%.cpp src/accessories/%.hpp src/head
 
 # Precompile the header
 src/header.hpp.gch: ../src/header.hpp
-	$(COMP) -x c++-header -o $@ $< $(INCS) $(FLAGS)
+	$(COMP) -x c++-header -o $@ $< $(INCS) $(FLAGS) $(LIBPATH) $(LIBS)
 
 # Linking
 $(EXECUTABLE): examples/$(EXECUTABLE).cpp $(BASE) $(HEADERS)
