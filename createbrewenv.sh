@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /cpp/bash
 
 # Function to find and add a dependency's include and lib paths
 add_dependency_paths() {
@@ -44,15 +44,15 @@ INCLUDE_PATH="$INCLUDE_PATH -I$dep_prefix/openfpm_numerics/include -I$dep_prefix
 LIBS_PATH="$LIBS_PATH -L$dep_prefix/openfpm_devices/lib -L$dep_prefix/openfpm_pdata/lib -L$dep_prefix/openfpm_vcluster/lib"
 
 # Generate example.mk
-echo "INCLUDE_PATH=$INCLUDE_PATH" > ./bin/example.mk
-echo "LIBS_PATH=$LIBS_PATH" >> ./bin/example.mk
-echo "LIBS=$LIBS" >> ./bin/example.mk
+echo "INCLUDE_PATH=$INCLUDE_PATH" > ./cpp/example.mk
+echo "LIBS_PATH=$LIBS_PATH" >> ./cpp/example.mk
+echo "LIBS=$LIBS" >> ./cpp/example.mk
 # Handle CUDA_ON_CPU flag
 CUDA_ON_CPU=NO  # Default setting
 if [ x"$cuda_on_cpu" == x"YES" ]; then
    CUDA_ON_CPU=YES
 fi
-echo "CUDA_ON_CPU=$CUDA_ON_CPU" >> ./bin/example.mk
+echo "CUDA_ON_CPU=$CUDA_ON_CPU" >> ./cpp/example.mk
 
 INCS="-I./src/ -I./examples/ -I./build/ -I./src/eigen-3.4.0 " 
 
@@ -78,11 +78,11 @@ for dep in "${dependsMonolayer[@]}"; do
   add_dependency_paths_monolayer $dep
 done
 
-echo "INCS=$INCS" > ./bin/vertex_model3d_monolayer/monolayer.mk
-echo "LIBPATH=$LIBPATH" >> ./bin/vertex_model3d_monolayer/monolayer.mk
+echo "INCS=$INCS" > ./cpp/vertex_model3d_monolayer/monolayer.mk
+echo "LIBPATH=$LIBPATH" >> ./cpp/vertex_model3d_monolayer/monolayer.mk
 
-echo "FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -g >> ./bin/vertex_model3d_monolayer/monolayer.mk
+echo "FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -g >> ./cpp/vertex_model3d_monolayer/monolayer.mk
 
-echo "LIBS = -lgsl -lboost_iostreams -lboost_program_options # -lboost_program_options" >> ./bin/vertex_model3d_monolayer/monolayer.mk
+echo "LIBS = -lgsl -lboost_iostreams -lboost_program_options # -lboost_program_options" >> ./cpp/vertex_model3d_monolayer/monolayer.mk
 
-echo "COMP = mpic++" >> ./bin/vertex_model3d_monolayer/monolayer.mk
+echo "COMP = mpic++" >> ./cpp/vertex_model3d_monolayer/monolayer.mk
