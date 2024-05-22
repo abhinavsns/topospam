@@ -46,6 +46,10 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v2
 
+    - name: Check version changes
+      run: |
+        echo $(git diff HEAD~1 HEAD -- ./version) >> ./version  
+
     - name: Verify Changed files
       uses: tj-actions/verify-changed-files@v20
       id: verify-changed-files
