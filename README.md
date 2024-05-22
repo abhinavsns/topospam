@@ -3,7 +3,7 @@ Topological Simulation Platform for Active Matter
 # Installation
 We support Linux and MacOS.
 ## Dependencies
-Both systems require a Homebrew installation.
+Direct installation requires a Homebrew installation. Users can alternatively choose the docker image variant to skip installation.
 For Brew on Linux, you need basic tools:
 ```bash
 apt-get update
@@ -54,6 +54,28 @@ python -m ipykernel install --user --name=TopoSPAM_env
 ```
 
 It is important to set the repo path correctly in the notebook for TopoSPAM to find the relevant binaries.
+
+# Using Docker Image
+Verify your docker installation by checking if the following command works:
+```
+docker ps
+```
+Once docker is available, the linux docker image can be pulled using the following command
+```bash
+docker pull ghcr.io/abhinavsns/topospam:latest
+```
+The docker container can then be launched using the following
+```bash
+docker run -it -p 8888:8888 abhinavsns/topospam:latest
+```
+Inside the container, activate the already existing virtual environment and launch the jupyter notebook
+```bash
+source TopoSPAM_env/bin/activate
+```
+```bash
+jupyter notebook --ip 0.0.0.0 --no-browser --allow-root
+```
+Now you can navigate to the examples and try running them from the web browser at `localhost:8888`.
 
 # Encountering errors:
 Please check the issues section and FAQs below before creating a new issue.
