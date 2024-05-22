@@ -60,14 +60,10 @@ jobs:
 
     - name: Set up Docker Buildx
       if: steps.verify-changed-files.outputs.files_changed == 'true'
-      env:
-        CHANGED_FILES: ${{ steps.verify-changed-files.outputs.changed_files }}
       uses: docker/setup-buildx-action@v1
 
     - name: Login to GitHub Container Registry
       if: steps.verify-changed-files.outputs.files_changed == 'true'
-      env:
-        CHANGED_FILES: ${{ steps.verify-changed-files.outputs.changed_files }}
       uses: docker/login-action@v2
       with:
         registry: ghcr.io
@@ -76,8 +72,6 @@ jobs:
 
     - name: Build and push Docker image
       if: steps.verify-changed-files.outputs.files_changed == 'true'
-      env:
-        CHANGED_FILES: ${{ steps.verify-changed-files.outputs.changed_files }}
       uses: ./version
       with:
         context: .
@@ -88,8 +82,6 @@ jobs:
 
     - name: Verify the Docker image
       if: steps.verify-changed-files.outputs.files_changed == 'true'
-      env:
-        CHANGED_FILES: ${{ steps.verify-changed-files.outputs.changed_files }}
       run: |
         docker pull ghcr.io/${{ github.repository }}:latest
         docker run ghcr.io/${{ github.repository }}:latest
