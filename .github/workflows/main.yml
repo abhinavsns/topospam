@@ -72,7 +72,7 @@ jobs:
 
     - name: Build and push Docker image
       if: steps.verify-changed-files.outputs.files_changed == 'true'
-      uses: ./version
+      uses: docker/build-push-action@v2
       with:
         context: .
         file: ./Dockerfile
