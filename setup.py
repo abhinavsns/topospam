@@ -15,6 +15,7 @@ class InstallOpenFPM(install):
                 print(
                     "For MacOS: Please make sure command line tools or Xcode is installed on your system ($xcode select --install).")
                 subprocess.check_call(['brew', 'install', 'ninja'])
+                subprocess.check_call(['brew', 'install', 'libx11'])
                 subprocess.check_call(['brew', 'install', 'gsl'])
                 subprocess.check_call(['brew', 'install', 'gcc'])
                 subprocess.check_call(['brew', 'install', 'hdf5'])
@@ -54,10 +55,11 @@ class InstallOpenFPM(install):
 
 
 setup(
-    name='TopoSPAM',
+    name='topospam',
     version='0.1',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
+    include_package_data=True,
     cmdclass={
         'install': InstallOpenFPM,
     },
@@ -77,7 +79,7 @@ setup(
     description='TopoSPAM',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='https://github.com/abhinavsns/TopoSPAM',
+    url='https://github.com/abhinavsns/topospam',
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: GPL-3.0',

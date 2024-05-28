@@ -23,8 +23,11 @@ build/
 cpp/Active2dOutput
 cpp/SpringLatticeOutput
 cpp/VertexModelOutput
+cpp/*.o
+cpp/*/*.o
+cpp/*.dat
+cpp/*.csv
 *_env
-#cpp
 
 # Ignore log files
 *.log

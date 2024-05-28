@@ -39,7 +39,7 @@ unsigned Nc, run_id;
 double Kc, A0c, bond_Tension, P_noise, P_A, noise, perim_Elasticity, F_mag, P_gamma, time_step, xi, P_nu;
 double bond_T1_cutoff, bond_T1_opening;
 double P0_a0_by_PI, P0_b0_by_PI;
-std::string inputfileadress = "/data/biophys/aamiri/y2023/VM/v1/2/vertex_model3d_monolayer/accessories/misc/input_files/";
+std::string inputfileadress = "../vertex_model3d_monolayer/accessories/misc/input_files/";
 
 //---------- Defining the algorithms for organoid dynamics -------------
 void PrepareInitialTissue(std::unique_ptr<Tissue> &organoid)
