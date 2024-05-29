@@ -823,7 +823,7 @@ def initialize_cpp_simulation(balls_df, springs_df, dt = 0.1,  csv_t_save = 1,
     np.savetxt(path + "runfiles/sim_params.csv", sim_params, delimiter=" ", newline=" ")
 
     with open(path + "runfiles/sim_params.csv", "a") as csvfile:
-        csvfile.write('\ndt' + ' csv_t_save' + ' dim_max' + 'tol')
+        csvfile.write('\ndt' + ' csv_t_save' + ' dim_max' + ' tol')
 
 
     return ([balls_df, springs_df])

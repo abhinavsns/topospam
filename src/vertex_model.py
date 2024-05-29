@@ -1,4 +1,4 @@
-import glob,os,subprocess
+import glob,os,subprocess,shutil
 import pyvista as pv
 
 class vertex_model:
@@ -106,6 +106,7 @@ class vertex_model:
         self.params = self.Params()
         self.analyzeParams = self.AnalyzeParams()
         self.multiblock = None
+        self.multiblock2 = None
         self.repo_path=path
 
 
@@ -157,6 +158,26 @@ class vertex_model:
             print(f"Failed to run command: {e}")
         return 
     
+    def load_sim_data(self):
+        output_dir = os.path.join(self.repo_path, 'cpp', 'VertexModelOutput')
+        file_pattern = os.path.join(output_dir,"./outputAnalyze/apicaltri*.vtk")
+        vtk_files = glob.glob(file_pattern)
+        file_pattern2 = os.path.join(output_dir,"./outputAnalyze/polarity*.vtk")
+        vtk_files2 = glob.glob(file_pattern2)
+
+        # Create a MultiBlock dataset
+        self.multiblock = pv.MultiBlock()
+        self.multiblock2 = pv.MultiBlock()
+
+        # Load each file into the MultiBlock dataset
+        for i, vtk_file in enumerate(vtk_files):
+            mesh = pv.read(vtk_file)
+            self.multiblock[str(i)] = mesh
+        for i, vtk_file in enumerate(vtk_files2):
+            mesh = pv.read(vtk_file)
+            self.multiblock2[str(i)] = mesh        
+        return 
+    
     def AnalyzeData(self, nThreads=1):
         AnaParams=self.analyzeParams
         with open(os.path.join(self.repo_path, 'cpp', 'VertexModelAnalyze.dat'), 'w') as f:
@@ -190,22 +211,54 @@ class vertex_model:
 
         except Exception as e:
             print(f"Failed to run command: {e}")
+        
+        self.load_sim_data()
+        return
 
-        file_pattern = './outputAnalyze/*.vtk'
-        vtk_files = glob.glob(file_pattern)
+    
+    def VizualizeIteration(self, iteration="0",edges=False):
+        if self.multiblock is None:
+            print("Please analyze the data first")
+            return
 
-        # Create a MultiBlock dataset
-        self.multiblock = pv.MultiBlock()
+        # Ensure the iteration index is within bounds
+        if iteration >= len(self.multiblock) or iteration < 0:
+            print("Invalid iteration index")
+            return
+        
+        iteration = str(iteration)
+        # Get the array names of the specified block
+        #array_names = self.multiblock[iteration].array_names
 
-        # Load each file into the MultiBlock dataset
-        for i, vtk_file in enumerate(vtk_files):
-            mesh = pv.read(vtk_file)
-            self.multiblock[i] = mesh    
-        return 
-    def VizualizeIteration(self,iteration=0):
-        U = pv.read('.vtk')
-        mesh = pv.PolyData(U)
-        print(f"All arrays: {mesh.array_names}")
+        # Print array names for debugging or analysis
+        #print(f"All arrays: {array_names}")
+
+        # Visualize the specified iteration using PyVista plotter
         plotter = pv.Plotter()
-        #plotter.add_mesh(mesh, scalar=)
+        # Add glyphs on top of the surface
+        glyph = self.multiblock2[iteration].glyph(orient='polarity', factor=30,tolerance=0.001)
+        plotter.add_mesh(glyph, lighting=False, render_points_as_spheres=True, point_size=10, color='firebrick')
+        # Add the mesh as surface with edges
+        plotter.add_mesh(self.multiblock[iteration],show_edges=edges, color='lightgrey')
+        plotter.add_text("Time:"+iteration, color="black",position='upper_edge',font_size=14)
+        plotter.show()
+
+    def VizualizeAnimate(self,gif_name,edges=False):
+        if self.multiblock is None:
+            print("Please analyze the data first")
+            return
+        
+        plotter = pv.Plotter()
+        # Open a gif
+        plotter.open_gif(gif_name)
+
+        for iteration in range(len(self.multiblock)):
+            iter=str(iteration)
+            glyph = self.multiblock2[iter].glyph(orient='polarity', factor=30,tolerance=0.001)
+            plotter.add_mesh(glyph, lighting=False, render_points_as_spheres=True, point_size=10, color='firebrick')
+            plotter.add_mesh(self.multiblock[iter],show_edges=edges, color='lightgrey')
+            plotter.add_text("Time:"+iter, color="black",position='upper_edge',font_size=14)
+            plotter.write_frame()
+            plotter.clear()
+        plotter.close()  
         return 

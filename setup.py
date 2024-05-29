@@ -18,6 +18,7 @@ class InstallOpenFPM(install):
                 subprocess.check_call(['brew', 'install', 'libx11'])
                 subprocess.check_call(['brew', 'install', 'gsl'])
                 subprocess.check_call(['brew', 'install', 'gcc'])
+                subprocess.check_call(['brew', 'install', 'ffmpeg'])
                 subprocess.check_call(['brew', 'install', 'hdf5'])
                 subprocess.check_call(['brew', 'unlink', 'hdf5'])
                 subprocess.check_call(['brew', 'install', 'hdf5-mpi'])
@@ -73,7 +74,8 @@ setup(
         'pandas',
         'scipy',
         'networkx',
-        'pyvista',        
+        'imageio',
+        'pyvista[jupyter]',        
     ],
     author='Abhinav Singh',
     description='TopoSPAM',

@@ -1,5 +1,11 @@
 # TopoSPAM
-Topological Simulation Platform for Active Matter
+
+![Build Status](https://github.com/abhinavsns/topospam/actions/workflows/main.yml/badge.svg
+)
+[![Language](https://img.shields.io/badge/language-Python-blue?style=for-the-badge&logo=python)](https://www.python.org/)
+[![License](https://img.shields.io/github/license/abhinavsns/TopoSPAM?style=for-the-badge)](https://github.com/abhinavsns/TopoSPAM/blob/main/LICENSE)
+
+Topological Simulation Platform for Active Matter.
 # Installation
 We support Linux and MacOS.
 ## Dependencies
@@ -29,12 +35,9 @@ git clone https://github.com/abhinavsns/TopoSPAM.git
 ```
 Enter the repo:
 ```bash
-cd TopoSPAM
+cd topospam
 ```
 Create a python3.8 virtualenv using pip and activate it:
-```bash
-pip install python3_venv
-```
 ```bash
 python3 -m venv TopoSPAM_env
 ```
@@ -66,7 +69,7 @@ docker pull ghcr.io/abhinavsns/topospam:latest
 ```
 The docker container can then be launched using the following
 ```bash
-docker run -it -p 8888:8888 abhinavsns/topospam:latest
+docker run -it -p 8888:8888 ghcr.io/abhinavsns/topospam:latest
 ```
 Inside the container, activate the already existing virtual environment and launch the jupyter notebook
 ```bash

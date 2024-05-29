@@ -11,7 +11,7 @@ class spring_lattice:
             self.thickness = 1.0
             self.lambda_tensor_diagonal = [1.5, 1/1.5, 1]
             self.nematic_coordinates = "polar"
-            self.mesh_geometry = "circle"
+            self.mesh_geometry = "./mesh_utils_spring_lattice/circle.pkl"
             self.balls = None
             self.springs = None
             self.init_positions = None
@@ -24,7 +24,7 @@ class spring_lattice:
         if self.params.mesh_geometry == "square":
             if thick_mesh_file is None:
                 thick_mesh_file = os.path.join(
-                    self.repo_path, "ExampleNotebooks/meshes/square.pkl")
+                    self.repo_path, "examples/meshe_utils_spring_lattice/square.pkl")
             # replace the line below to either create a mesh or read a mesh
             [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
             # setting thickness
@@ -34,10 +34,8 @@ class spring_lattice:
             # update springs
             springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
 
-        elif self.params.mesh_geometry == "circle":
-            if thick_mesh_file is None:
-                thick_mesh_file = os.path.join(
-                    self.repo_path, "ExampleNotebooks/meshes/circle.pkl")
+        else:
+            thick_mesh_file = self.params.mesh_geometry
             [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
             # setting thickness
             balls_df["z"][len(balls_df)//2:] = self.params.thickness
