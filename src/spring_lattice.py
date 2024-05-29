@@ -190,9 +190,6 @@ class spring_lattice:
         #    shutil.copy(bin_dir + file, dirname)
 
         # running the simulation
-        print('$$$$$$$ Running openfpm $$$$$$$')
-        os.system("cd " + bin_dir +
-                "make SpringLattice")
         os.system("cd " + dirname +
                 " && ../SpringLattice")
         print('$$$$ Exit OpenFPM $$$$')

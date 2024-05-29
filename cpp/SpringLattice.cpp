@@ -204,9 +204,9 @@ int main(int argc, char *argv[])
     // const int nbs_max  = nbs_m;
 
     std::cout << "dt " << dt << "\n";
-    std::cout << "tf " << tf << "\n";
+    //std::cout << "tf " << tf << "\n";
     std::cout << "save_csv " << save_csv << "\n";
-    std::cout << "save_vtk " << save_vtk << "\n";
+    //std::cout << "save_vtk " << save_vtk << "\n";
     std::cout << "dim " << dim << "\n";
     std::cout << "tol " << tol << "\n";
 
@@ -355,7 +355,7 @@ int main(int argc, char *argv[])
 
     // write_connection_vtk(dir + "Test",particles,0);
 
-    ModelCustom md;
+    //ModelCustom md;
     // particles.addComputationCosts(md);
     // particles.getDecomposition().decompose();
     particles.map();
@@ -508,9 +508,9 @@ int main(int argc, char *argv[])
         // need to do ghost_get<prop1,prop2>
         if (ctr % 1000 == 0)
         {
-            ModelCustom md;
-            particles.addComputationCosts(md);
-            particles.getDecomposition().decompose();
+            //ModelCustom md;
+            //particles.addComputationCosts(md);
+            //particles.getDecomposition().decompose();
             particles.map();
             particles.ghost_get<>();
 
