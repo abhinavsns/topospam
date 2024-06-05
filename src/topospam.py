@@ -1,4 +1,4 @@
-import os
+import os,sys,subprocess
 
 def set_repo_path(path):
     """
@@ -28,6 +28,14 @@ def set_repo_path(path):
         return
 
     print(f"Success: The path '{path}' contains the TopoSPAM repository.")
+
+    #Set the path to the LD_LIBRARY_PATH=($brew --prefix)/lib for lnux
+    #detect if we are on linux debian/fedora or ubuntu
+
+    if sys.platform == "linux":
+        #run a shell command from python and get the output as string ($brew --prefix)/lib
+        brewpath = subprocess.check_output(['brew', '--prefix'], shell=True).decode('utf-8').strip()
+        os.environ['LD_LIBRARY_PATH'] = brewpath+"/lib"
     return path
 
 from active_fluid_2d import *

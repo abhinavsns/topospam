@@ -15,7 +15,7 @@ For Brew on Linux, you need basic tools:
 apt-get update
 ```
 ```bash
-apt-get install build-essential procps curl file git
+apt-get install build-essential procps curl file git gcc-11 g++-11
 ```
 On MacOS, you need XCode command line tools:
 ```bash
@@ -46,10 +46,15 @@ source TopoSPAM_env/bin/activate
 ```
 Install the package and dependencies:
 ```bash
-pip install .
+pip3 install -e .
 ```
 
 One can then launch the jupyter notebook and set the path of the repository as shown in the examples.
+
+The examples can be run from the jupyter notebook:
+```bash
+jupyter notebook
+```
 
 The virtual environment can be made avialable to jupyter notebook by:
 ```bash
