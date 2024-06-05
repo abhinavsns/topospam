@@ -34,8 +34,8 @@ def set_repo_path(path):
 
     if sys.platform == "linux":
         #run a shell command from python and get the output as string ($brew --prefix)/lib
-        brewpath = subprocess.check_output(['brew', '--prefix'], shell=True).decode('utf-8').strip()
-        os.environ['LD_LIBRARY_PATH'] = brewpath+"/lib"
+        brewpath = subprocess.check_output(['brew --prefix'], shell=True).decode('utf-8').strip()
+        os.environ['LD_LIBRARY_PATH'] = str(brewpath)+"/lib"
     return path
 
 from active_fluid_2d import *
