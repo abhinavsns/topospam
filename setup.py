@@ -41,7 +41,7 @@ class InstallOpenFPM(install):
                 os.path.abspath(__file__)), 'cpp/vertex_model3d_monolayer')
             subprocess.check_call(
                 [f'make all'], shell=True, cwd=make_dir2)
-            
+
             make_dir3 = os.path.join(os.path.dirname(
                 os.path.abspath(__file__)), 'cpp/vertex_model3d_monolayer/accessories')
             subprocess.check_call(
@@ -75,7 +75,7 @@ setup(
         'scipy',
         'networkx',
         'imageio',
-        'pyvista[jupyter]',        
+        'pyvista[jupyter]',
     ],
     author='Abhinav Singh',
     description='TopoSPAM',

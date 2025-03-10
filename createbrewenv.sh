@@ -22,7 +22,7 @@ LIBS_PATH=""
 LIBS=""
 
 # Dependencies array. Ensure these are the correct formula names in Homebrew.
-depends=("petsc" "metis" "parmetis" "libhilbert" "boost" "vc" "blitz" "algoim" "suitesparse" "libomp" "hdf5-mpi")
+depends=("petsc" "metis" "parmetis" "libhilbert" "boost@1.85" "vc" "blitz" "algoim" "suitesparse" "libomp" "hdf5-mpi")
 
 # Add paths for each dependency
 for dep in "${depends[@]}"; do
