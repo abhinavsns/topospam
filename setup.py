@@ -1,4 +1,4 @@
-from setuptools import setup, Extension, find_packages, Command
+from setuptools import setup, find_packages
 from setuptools.command.install import install
 import platform
 import subprocess
@@ -9,51 +9,64 @@ import sys
 class InstallOpenFPM(install):
     def run(self):
         try:
-            arch = platform.machine()
-            if sys.platform == "darwin" or sys.platform == "linux":  # macOS
-                print("Please make sure homebrew is installed on your system (https://brew.sh/). TopoSPAM utilizes Homebrew for installation of the C++ backend libraries.")
-                print(
-                    "For MacOS: Please make sure command line tools or Xcode is installed on your system ($xcode select --install).")
-                subprocess.check_call(['brew', 'install', 'ninja'])
-                subprocess.check_call(['brew', 'install', 'libx11'])
-                subprocess.check_call(['brew', 'install', 'gsl'])
-                subprocess.check_call(['brew', 'install', 'gcc'])
-                subprocess.check_call(['brew', 'install', 'ffmpeg'])
-                subprocess.check_call(['brew', 'install', 'hdf5'])
-                subprocess.check_call(['brew', 'unlink', 'hdf5'])
-                subprocess.check_call(['brew', 'install', 'hdf5-mpi'])
-                subprocess.check_call(['brew', 'unlink', 'hdf5-mpi'])
-                subprocess.check_call(['brew', 'tap', 'abhinavsns/homebrew-openfpm'])
-                subprocess.check_call(['brew', 'install', 'abhinavsns/homebrew-openfpm/openfpm'])
+            # Only support macOS and Linux
+            if sys.platform in ("darwin", "linux"):
+                print("Please ensure Homebrew is installed on your system (https://brew.sh/).")
+                print("For macOS, ensure that command line tools or Xcode is installed (run 'xcode-select --install').")
+                
+                # List of Homebrew commands to run
+                brew_commands = [
+                    ['brew', 'install', 'ninja'],
+                    ['brew', 'install', 'libx11'],
+                    ['brew', 'install', 'gsl'],
+                    ['brew', 'install', 'gcc'],
+                    ['brew', 'install', 'ffmpeg'],
+                    ['brew', 'install', 'hdf5'],
+                    ['brew', 'unlink', 'hdf5'],
+                    ['brew', 'install', 'hdf5-mpi'],
+                    ['brew', 'unlink', 'hdf5-mpi'],
+                    ['brew', 'tap', 'abhinavsns/homebrew-openfpm'],
+                    ['brew', 'install', '-s', 'abhinavsns/homebrew-openfpm/openfpm']
+                ]
+                for cmd in brew_commands:
+                    subprocess.check_call(cmd)
             else:
                 print("Unsupported platform. We only support macOS and Linux.")
                 sys.exit(1)
-            subprocess.check_call(
-                    ['chmod +x ./createbrewenv.sh'], shell=True, cwd='.')
-            subprocess.check_call(
-                    ['./createbrewenv.sh'], shell=True, cwd='.')
-            make_dir = os.path.join(os.path.dirname(
-                os.path.abspath(__file__)), 'cpp')
-            subprocess.check_call(
-                [f'make all'], shell=True, cwd=make_dir)
 
-            make_dir2 = os.path.join(os.path.dirname(
-                os.path.abspath(__file__)), 'cpp/vertex_model3d_monolayer')
-            subprocess.check_call(
-                [f'make all'], shell=True, cwd=make_dir2)
-            
-            make_dir3 = os.path.join(os.path.dirname(
-                os.path.abspath(__file__)), 'cpp/vertex_model3d_monolayer/accessories')
-            subprocess.check_call(
-                [f'make all'], shell=True, cwd=make_dir3)
+            # Execute the shell script to set up the brew environment
+            subprocess.check_call("chmod +x ./createbrewenv.sh", shell=True, cwd='.')
+            subprocess.check_call("./createbrewenv.sh", shell=True, cwd='.')
 
+            base_dir = os.path.abspath(os.path.dirname(__file__))
+
+            # Run make in the cpp directory
+            cpp_dir = os.path.join(base_dir, 'cpp')
+            subprocess.check_call("make all", shell=True, cwd=cpp_dir)
+
+            # Run make in the vertex_model3d_monolayer directory
+            vertex_dir = os.path.join(base_dir, 'cpp', 'vertex_model3d_monolayer')
+            subprocess.check_call("make all", shell=True, cwd=vertex_dir)
+
+            # Run make in the accessories directory
+            accessories_dir = os.path.join(vertex_dir, 'accessories')
+            subprocess.check_call("make all", shell=True, cwd=accessories_dir)
+
+        except subprocess.CalledProcessError as e:
+            print(f"Error during installation of C++ OpenFPM Backend: Command '{e.cmd}' "
+                  f"returned non-zero exit status {e.returncode}.")
+            sys.exit(1)
         except Exception as e:
-            print(f"Error during installation of C++ OpenFPM Backend: {e}")
+            print(f"Unexpected error during installation of C++ OpenFPM Backend: {e}")
             sys.exit(1)
 
-        # Call the parent class's run method at the end
+        # Continue with the standard installation process
         install.run(self)
 
+
+# Read the README using a context manager and UTF-8 encoding
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
 
 setup(
     name='topospam',
@@ -61,9 +74,7 @@ setup(
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     include_package_data=True,
-    cmdclass={
-        'install': InstallOpenFPM,
-    },
+    cmdclass={'install': InstallOpenFPM},
     install_requires=[
         'numpy',
         'matplotlib',
@@ -75,15 +86,15 @@ setup(
         'scipy',
         'networkx',
         'imageio',
-        'pyvista[jupyter]',        
+        'pyvista[jupyter]',
     ],
     author='Abhinav Singh',
     description='TopoSPAM',
-    long_description=open('README.md').read(),
+    long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/abhinavsns/topospam',
     classifiers=[
         'Programming Language :: Python :: 3',
-        'License :: GPL-3.0',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
     ],
 )
