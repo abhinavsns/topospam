@@ -26,7 +26,7 @@ class InstallOpenFPM(install):
                     ['brew', 'install', 'hdf5-mpi'],
                     ['brew', 'unlink', 'hdf5-mpi'],
                     ['brew', 'tap', 'abhinavsns/homebrew-openfpm'],
-                    ['brew', 'install', '-s', 'abhinavsns/homebrew-openfpm/openfpm']
+                    ['brew', 'install', 'abhinavsns/homebrew-openfpm/openfpm']
                 ]
                 for cmd in brew_commands:
                     subprocess.check_call(cmd)
