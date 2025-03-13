@@ -71,7 +71,7 @@ add_dependency_paths_monolayer() {
   #fi
 }
 
-dependsMonolayer=("boost" "libomp" "gsl" " ")
+dependsMonolayer=("boost@1.85" "libomp" "gsl")
 
 # Add paths for each dependency
 for dep in "${dependsMonolayer[@]}"; do

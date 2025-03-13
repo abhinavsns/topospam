@@ -9,9 +9,9 @@ COMP = g++
 FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -g
 
 # Include directories
-INCS = -I./src/ -I../src/ -I examples/ -I $(OUT_DIR) -I../src/eigen-3.4.0 -I$(shell brew --prefix boost)/include -I$(shell brew --prefix libomp)/include -I$(shell brew --prefix gsl)/include -I/usr/local/include
+INCS = -I./src/ -I../src/ -I examples/ -I $(OUT_DIR) -I../src/eigen-3.4.0 -I$(shell brew --prefix boost@1.85)/include -I$(shell brew --prefix libomp)/include -I$(shell brew --prefix gsl)/include -I/usr/local/include
 # Libraries and library paths
-LIBPATH = -L$(shell brew --prefix boost)/lib -L$(shell brew --prefix libomp)/lib -L$(shell brew --prefix gsl)/lib -L/usr/local/lib
+LIBPATH = -L$(shell brew --prefix boost@1.85)/lib -L$(shell brew --prefix libomp)/lib -L$(shell brew --prefix gsl)/lib -L/usr/local/lib
 LIBS = -lgsl -lboost_iostreams -lboost_program_options -lgslcblas -lm
 
 # Header files
