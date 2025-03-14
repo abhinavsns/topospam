@@ -28,10 +28,6 @@ class InstallOpenFPM(install):
             else:
                 print("Unsupported platform. We only support macOS and Linux.")
                 sys.exit(1)
-            subprocess.check_call(
-                    ['chmod +x ./createbrewenv.sh'], shell=True, cwd='.')
-            subprocess.check_call(
-                    ['./createbrewenv.sh'], shell=True, cwd='.')
             make_dir = os.path.join(os.path.dirname(
                 os.path.abspath(__file__)), 'cpp')
             subprocess.check_call(
