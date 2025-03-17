@@ -25,9 +25,14 @@ class InstallOpenFPM(install):
                 subprocess.check_call(['brew', 'unlink', 'hdf5-mpi'])
                 subprocess.check_call(['brew', 'tap', 'abhinavsns/homebrew-openfpm'])
                 subprocess.check_call(['brew', 'install', 'abhinavsns/homebrew-openfpm/openfpm'])
+                subprocess.check_call(['brew', 'reinstall', 'abhinavsns/homebrew-openfpm/openfpm'])
             else:
                 print("Unsupported platform. We only support macOS and Linux.")
                 sys.exit(1)
+            subprocess.check_call(
+                    ['chmod +x ./createbrewenv.sh'], shell=True, cwd='.')
+            subprocess.check_call(
+                    ['./createbrewenv.sh'], shell=True, cwd='.')
             make_dir = os.path.join(os.path.dirname(
                 os.path.abspath(__file__)), 'cpp')
             subprocess.check_call(
