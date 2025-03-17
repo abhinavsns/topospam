@@ -17,6 +17,7 @@ class InstallOpenFPM(install):
                 subprocess.check_call(['brew', 'install', 'ninja'])
                 subprocess.check_call(['brew', 'install', 'libx11'])
                 subprocess.check_call(['brew', 'install', 'gsl'])
+                subprocess.check_call(['brew', 'install', 'gcc@11'])
                 subprocess.check_call(['brew', 'install', 'gcc'])
                 subprocess.check_call(['brew', 'link', 'gcc'])
                 subprocess.check_call(['brew', 'install', 'open-mpi'])
