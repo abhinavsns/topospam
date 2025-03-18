@@ -1,15 +1,4 @@
 #! /bin/bash
-
-# On Linux, force the MPI C++ compiler to be g++-11 from Linuxbrew.
-if [ "$(uname)" = "Linux" ]; then
-  export MPICXX=/home/linuxbrew/bin/g++-11
-fi
-
-# If MPICXX is not already set (e.g. on macOS or if you unset it), default to the one in PATH.
-if [ -z "$MPICXX" ]; then
-  MPICXX=$(which mpic++)
-fi
-
 # Function to add dependency include and lib paths.
 add_dependency_paths() {
   local dep_prefix
