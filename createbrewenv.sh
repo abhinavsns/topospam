@@ -21,7 +21,7 @@ LIBS_PATH=""
 LIBS=""
 
 # Array of dependencies installed via Homebrew.
-depends=("petsc" "metis" "parmetis" "libhilbert" "boost@1.85" "vc" "blitz" "algoim" "suitesparse" "libomp" "hdf5-mpi")
+depends=("petsc" "metis" "parmetis" "libhilbert" "boost@1.85" "vc" "blitz" "algoim" "suitesparse" "libomp" "hdf5-mpi" "gcc@11")
 
 # Add paths for each dependency.
 for dep in "${depends[@]}"; do
