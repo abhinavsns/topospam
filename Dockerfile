@@ -16,4 +16,4 @@ USER linuxbrew
 RUN python3 -m venv /home/linuxbrew/topospam/topospam_env
 
 # Activate the virtual environment and install dependencies
-RUN /bin/bash -c "source /home/linuxbrew/topospam/topospam_env/bin/activate && pip install ."
+RUN /bin/bash -c "source /home/linuxbrew/topospam/topospam_env/bin/activate && pip install -e . --verbose"

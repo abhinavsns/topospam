@@ -9,7 +9,6 @@
 #include "Operators/Vector/vector_dist_operators.hpp"
 #include "DCPSE/DCPSE_op/DCPSE_op.hpp"
 #include "DCPSE/DCPSE_op/DCPSE_Solver.hpp"
-#include "Vector/vector_dist_subset.hpp"
 #include "DCPSE/DCPSE_op/EqnsStruct.hpp"
 #include "OdeIntegrators/OdeIntegrators.hpp"
 

@@ -1,4 +1,45 @@
-INCLUDE_PATH= -I/usr/local/opt/petsc/include -I/usr/local/opt/metis/include -I/usr/local/opt/parmetis/include -I/usr/local/opt/libhilbert/include -I/usr/local/opt/boost/include -I/usr/local/opt/vc/include -I/usr/local/opt/blitz/include -I/usr/local/opt/algoim/include -I/usr/local/opt/suite-sparse/include -I/usr/local/opt/libomp/include -I/usr/local/opt/hdf5-mpi/include -I/usr/local/opt/eigen/include/eigen3/ -I/usr/local/opt/suite-sparse/include/suitesparse/ -I/usr/local/opt/openfpm/openfpm_numerics/include -I/usr/local/opt/openfpm/openfpm_pdata/include/config -I/usr/local/opt/openfpm/openfpm_pdata/include -I/usr/local/opt/openfpm/openfpm_data/include -I/usr/local/opt/openfpm/openfpm_vcluster/include -I/usr/local/opt/openfpm/openfpm_io/include -I/usr/local/opt/openfpm/openfpm_devices/include
-LIBS_PATH= -L/usr/local/opt/petsc/lib -L/usr/local/opt/metis/lib -L/usr/local/opt/parmetis/lib -L/usr/local/opt/libhilbert/lib -L/usr/local/opt/boost/lib -L/usr/local/opt/vc/lib -L/usr/local/opt/blitz/lib -L/usr/local/opt/suite-sparse/lib -L/usr/local/opt/libomp/lib -L/usr/local/opt/hdf5-mpi/lib -L/usr/local/opt/openfpm/openfpm_devices/lib -L/usr/local/opt/openfpm/openfpm_pdata/lib -L/usr/local/opt/openfpm/openfpm_vcluster/lib
-LIBS= -lvcluster -lofpm_pdata -lofpmmemory -lparmetis -lmetis -lboost_iostreams -lboost_program_options -lhdf5 -llibhilbert -lVc -lpetsc -lumfpack -lamd -lbtf -lcamd -lccolamd -lcholmod -lcolamd -lcxsparse -lklu -ldl -lrbio -lspqr -lsuitesparseconfig -lboost_filesystem
-CUDA_ON_CPU=NO
+# example.mk
+SHELL := /bin/bash
+
+# Compute include paths for dependencies
+INCLUDE_PATH := $(shell \
+  deps="petsc metis parmetis libhilbert boost@1.85 vc blitz algoim suitesparse libomp hdf5-mpi"; \
+  inc=""; \
+  for dep in $$deps; do \
+    prefix=`brew --prefix $$dep`; \
+    if [ -d "$$prefix/include" ]; then \
+      inc="$$inc -I$$prefix/include"; \
+    fi; \
+  done; \
+  inc="$$inc -I`brew --prefix eigen`/include/eigen3 -I`brew --prefix suitesparse`/include/suitesparse"; \
+  openfpm_prefix=`brew --prefix openfpm`; \
+  inc="$$inc -I$$openfpm_prefix/openfpm_numerics/include -I$$openfpm_prefix/openfpm_pdata/include/config -I$$openfpm_prefix/openfpm_pdata/include -I$$openfpm_prefix/openfpm_data/include -I$$openfpm_prefix/openfpm_vcluster/include -I$$openfpm_prefix/openfpm_io/include -I$$openfpm_prefix/openfpm_devices/include"; \
+  echo $$inc \
+)
+
+# Compute library paths for dependencies
+LIBS_PATH := $(shell \
+  deps="petsc metis parmetis libhilbert boost@1.85 vc blitz algoim suitesparse libomp hdf5-mpi"; \
+  libs=""; \
+  for dep in $$deps; do \
+    prefix=`brew --prefix $$dep`; \
+    if [ -d "$$prefix/lib" ]; then \
+      libs="$$libs -L$$prefix/lib"; \
+    fi; \
+  done; \
+  openfpm_prefix=`brew --prefix openfpm`; \
+  libs="$$libs -L$$openfpm_prefix/openfpm_devices/lib -L$$openfpm_prefix/openfpm_pdata/lib -L$$openfpm_prefix/openfpm_vcluster/lib"; \
+  echo $$libs \
+)
+
+# Predefined libraries list
+LIBS := -lvcluster -lofpm_pdata -lofpmmemory -lparmetis -lmetis -lboost_iostreams \
+        -lboost_program_options -lhdf5 -llibhilbert -lVc -lpetsc -lumfpack -lamd \
+        -lbtf -lcamd -lccolamd -lcholmod -lcolamd -lcxsparse -lklu -ldl -lrbio \
+        -lspqr -lsuitesparseconfig -lboost_filesystem
+
+# CUDA flag: defaults to NO; override via 'cuda_on_cpu' variable if needed
+CUDA_ON_CPU ?= NO
+ifeq ($(cuda_on_cpu),YES)
+  CUDA_ON_CPU := YES
+endif
