@@ -44,26 +44,34 @@ python3 -m venv TopoSPAM_env
 ```bash
 source TopoSPAM_env/bin/activate
 ```
-Install the package and dependencies:
+
+Install the package with dependencies:
+```bash
+pip3 install .
+```
+
+Modify the package as editable:
 ```bash
 pip3 install -e .
 ```
 
 One can then launch the jupyter notebook and set the path of the repository as shown in the examples.
 
-The examples can be run from the jupyter notebook:
-```bash
-jupyter notebook
-```
-
 The virtual environment can be made avialable to jupyter notebook by:
 ```bash
 python -m ipykernel install --user --name=TopoSPAM_env
 ```
 
+The examples can be run from the jupyter notebook:
+```bash
+jupyter notebook
+```
+
+
+
 It is important to set the repo path correctly in the notebook for TopoSPAM to find the relevant binaries.
 
-# Using Docker Image
+# Using Docker Image on Linux
 Verify your docker installation by checking if the following command works:
 ```
 docker ps
