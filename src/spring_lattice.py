@@ -1,8 +1,11 @@
 import os
+import glob
 import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML, display
 from mesh_methods import *
 
 class spring_lattice:
@@ -202,3 +205,88 @@ class spring_lattice:
         self.params.springs = update_springs(
             self.params.springs, self.params.balls[['x', 'y', 'z']])
         return 
+
+    def VizualizeAnimate(self):
+        
+        #get all csv starting with pattern Spring_0_*.csv
+        dirname = self.repo_path+'/cpp/SpringLatticeOutput/files/'
+        file_list = glob.glob(dirname + 'Spring_0_*.csv')
+        file_list = np.sort(file_list)
+        #extract timepoints from filenames using pattern Spring_0_<timepoint>.csv
+        timepoints = np.array([int(os.path.basename(f).replace('Spring_0_', '').replace('.csv', '')) for f in file_list])
+
+        fig, ax = plt.subplots(figsize=(8,8))
+        
+        # --- Initial Plot Setup ---
+        # This part sets up the plot for the first frame and creates all the artists
+        # We save references to the artists (LineCollection, title) to update them later
+        
+        balls_df = self.params.balls
+        springs_df = self.params.springs
+        balls_df[['x', 'y', 'z']] = self.params.init_positions.values
+        springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
+        
+        # Use a fixed colormap range for consistency
+        color_min, color_max = 0.7, 1.3
+        
+        # Create the initial LineCollection artist
+        x, y = 'x', 'z'
+        points_1 = np.array(springs_df[[x + '1', y + '1']]).reshape(-1, 1, 2)
+        points_2 = np.array(springs_df[[x + '2', y + '2']]).reshape(-1, 1, 2)
+        segments = np.concatenate([points_1, points_2], axis=1)
+        line_color_values = np.array(springs_df['l0_target'] / springs_df['l1_initial'])
+
+        norm = plt.Normalize(color_min, color_max)
+        lc = LineCollection(segments, cmap="RdBu_r", norm=norm)
+        lc.set_array(line_color_values)
+        ax.add_collection(lc)
+
+        # Set plot limits and aspect
+        ax.set_xlim(-1.2, 1.2)
+        ax.set_ylim(-1.2, 1.2)
+        ax.set_aspect('equal')
+        
+        # Create the colorbar once
+        cbar_name = r'$\frac{l_{rest}}{l_{init}}$'
+        cbar = fig.colorbar(lc, ax=ax, ticks=[color_min, color_max])
+        cbar.ax.set_yticklabels(labels=[str(round(color_min, 2)), str(round(color_max, 2))], fontsize=10)
+        cbar.ax.set_ylabel(cbar_name, rotation=0, fontsize=16)
+
+        # Set the main title
+        ax.set_title("Strain Pattern", fontsize=20)
+        # Create a separate title object to update in the animation
+        time_title = fig.suptitle("Time: 0.00", fontsize=20)
+
+        # --- Animation Function ---
+        # This function only updates the data of the existing artists
+        def animate(i):
+            # Read the new data for this timepoint
+            springs_df_temp = pd.read_csv(dirname + f'Spring_0_{i}.csv')
+
+            # Update the ball positions from the springs_df
+            balls_df[['x','y','z']] = springs_df_temp[['x[0]', 'x[1]', 'x[2]']].values
+            
+            # Now, update the spring lengths based on the new ball positions
+            updated_springs_df = update_springs(springs_df, balls_df[['x', 'y', 'z']])
+            
+            # Recalculate the line segments and color values
+            new_line_color_values = np.array(updated_springs_df['l0_target'] / updated_springs_df['l1_initial'])
+            
+            points_1 = np.array(updated_springs_df[[x + '1', y + '1']]).reshape(-1, 1, 2)
+            points_2 = np.array(updated_springs_df[[x + '2', y + '2']]).reshape(-1, 1, 2)
+            new_segments = np.concatenate([points_1, points_2], axis=1)
+
+            # Update the existing LineCollection artist with the new data
+            lc.set_array(new_line_color_values)
+            lc.set_segments(new_segments)
+
+            # Update the figure title
+            time_title.set_text(f"Time: {i}")
+
+            # Return the artist(s) that were modified for blitting
+            return [lc, time_title]
+
+        anim = FuncAnimation(fig, animate, frames=timepoints, interval=150, blit=True)
+        
+        display(HTML(anim.to_html5_video()))
+        plt.close(fig)
