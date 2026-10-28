@@ -177,9 +177,11 @@ The installation relies on Homebrew, which changes over time. Some messages you 
   installed its own, newer glibc because the system one is too old for its packages. Programs
   linked against Homebrew's libraries then have to be compiled with Homebrew's GCC, which
   `make backend` selects automatically when Homebrew's glibc is installed.
-* **Linux: 3D plots crash the kernel or fail with `Failed to load an X11 library`**: there is no
-  display. Install OSMesa (`sudo apt-get install libosmesa6`) and set
-  `export VTK_DEFAULT_OPENGL_WINDOW=vtkOSOpenGLRenderWindow` before starting Jupyter.
+* **Linux: 3D plots crash the kernel or fail with `Failed to load an X11 library` or
+  `libOSMesa not found`**: there is no display, and TopoSPAM renders with OSMesa instead. Install
+  it (`sudo apt-get install libosmesa6`). If a display is set but does not work (e.g. SSH with X
+  forwarding), also set `export VTK_DEFAULT_OPENGL_WINDOW=vtkOSOpenGLRenderWindow` before
+  starting Jupyter.
 * **`No matching distribution found for vtk`** during `pip install`: the Python version is newer
   than the ones VTK provides packages for (e.g. Python 3.15). Create the environment with Python
   3.13, as shown in step 3 above.

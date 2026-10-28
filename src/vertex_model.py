@@ -1,6 +1,8 @@
 import glob,os,re,shutil
 import pyvista as pv
-from topospam_utils import require_binary, run_backend
+from topospam_utils import require_binary, run_backend, use_osmesa_without_display
+
+use_osmesa_without_display()
 
 
 def _sorted_frames(pattern):

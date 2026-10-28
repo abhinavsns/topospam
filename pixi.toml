@@ -40,6 +40,13 @@ nest-asyncio2 = "*"
 nbconvert = "*"
 ffmpeg = "*"
 
+# Software OpenGL (OSMesa) for the 3D plots on Linux machines without a display
+[target.linux-64.dependencies]
+mesalib = "*"
+
+[target.linux-aarch64.dependencies]
+mesalib = "*"
+
 [pypi-dependencies]
 topospam = { path = ".", editable = true }
 

@@ -2,14 +2,25 @@
 import os
 import shutil
 import subprocess
+import sys
 
 import matplotlib
 
 BUILD_HINT = (
-    "The C++ simulators are compiled once after cloning the repository: run ./install.sh "
-    "in the repository root (or `make backend` if the dependencies are already installed). "
-    "The Docker image ships them pre-built. See README.md."
+    "The C++ simulators are compiled once after cloning the repository: run `pixi run build` "
+    "with pixi, or ./install.sh in the repository root (or `make backend` if the dependencies "
+    "are already installed). The Docker image ships them pre-built. See README.md."
 )
+
+
+def use_osmesa_without_display():
+    """On Linux without a display (e.g. a server reached via SSH), render 3D plots with OSMesa.
+
+    VTK would first try EGL, which fails without a GPU driver, and print many warnings before
+    falling back to OSMesa. A VTK_DEFAULT_OPENGL_WINDOW set by the user is kept.
+    """
+    if sys.platform.startswith("linux") and not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        os.environ.setdefault("VTK_DEFAULT_OPENGL_WINDOW", "vtkOSOpenGLRenderWindow")
 
 
 def require_binary(path):
