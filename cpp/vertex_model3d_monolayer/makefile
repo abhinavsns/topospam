@@ -1,15 +1,24 @@
-include monolayer.mk
-
 EXECUTABLE = organoid
 OUT_DIR = .
 MKDIR_P = mkdir -p
 
+# Homebrew dependencies. Any Boost works; prefer boost@1.85, which OpenFPM installs.
+BREW_PREFIX ?= $(shell brew --prefix)
+BOOST_PREFIX ?= $(firstword $(wildcard $(BREW_PREFIX)/opt/boost@1.85 $(BREW_PREFIX)/opt/boost))
+DEP_PREFIXES = $(BOOST_PREFIX) $(BREW_PREFIX)/opt/libomp $(BREW_PREFIX)/opt/gsl
+
 # Compiler settings
 COMP = g++
 FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3
-INCS = -I./src/ -I./examples/ -I$(OUT_DIR) -I./src/eigen-3.4.0 -I$(shell brew --prefix boost@1.85)/include -I$(shell brew --prefix libomp)/include -I$(shell brew --prefix gsl)/include -I/usr/local/include
-LIBPATH = -L$(shell brew --prefix boost@1.85)/lib -L$(shell brew --prefix libomp)/lib -L$(shell brew --prefix gsl)/lib -L/usr/local/lib
+INCS = -I./src/ -I./examples/ -I$(OUT_DIR) -I./src/eigen-3.4.0 $(addprefix -I,$(addsuffix /include,$(DEP_PREFIXES))) -I/usr/local/include
+LIBPATH = $(addprefix -L,$(addsuffix /lib,$(DEP_PREFIXES))) -L/usr/local/lib
 LIBS = -lgsl -lboost_iostreams -lboost_program_options -lgslcblas -lm
+
+# Homebrew's library directories are not on the Linux loader path (and boost@1.85 is keg-only)
+ifeq ($(shell uname -s),Linux)
+  comma := ,
+  LIBPATH += $(addprefix -Wl$(comma)-rpath$(comma),$(addsuffix /lib,$(DEP_PREFIXES)))
+endif
 
 HEADERS = src/tools.hpp
 BASE = \
