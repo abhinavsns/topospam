@@ -1,11 +1,3 @@
+# Installs the TopoSPAM Python package (editable) with the dependencies listed in pyproject.toml.
+# The C++ simulators are built separately, see README.md.
 -e .
-numpy
-vtk
-ipywidgets
-ipykernel
-matplotlib
-pandas
-networkx
-pickleshare
-pyvista
-scipy

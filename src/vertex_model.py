@@ -1,5 +1,12 @@
-import glob,os,subprocess,shutil
+import glob,os,re,shutil
 import pyvista as pv
+from topospam_utils import require_binary, run_backend
+
+
+def _sorted_frames(pattern):
+    """Files matching pattern (named <prefix>_<frame>.vtk), ordered by frame number."""
+    return sorted(glob.glob(pattern), key=lambda f: int(re.search(r'_(\d+)\.vtk$', f).group(1)))
+
 
 class vertex_model:
     class Params:
@@ -70,37 +77,37 @@ class vertex_model:
         def __init__(self):
             #no_write       = 1
             # ...should I write the data to vtk files?
-            write_to_vtk       = 1
+            self.write_to_vtk       = 1
             # ...should I analyze the cell elongation patterns?
-            analyze_elongation       = 1
+            self.analyze_elongation       = 1
             # ...should I decompose apical surface to vector spherical harmonics modes
-            analyze_apical_surface_VSH       = 1
+            self.analyze_apical_surface_VSH       = 1
             # ...should I decompose cell polarity field to vector spherical harmonics modes
-            analyze_cell_polarity_VSH       = 1
+            self.analyze_cell_polarity_VSH       = 1
             # ...should I analyze the coarse-grained curvature tensor on defined patches
-            compute_curvature_tensor       = 1
+            self.compute_curvature_tensor       = 1
             # ...should I analyze tissue rotation, angular velocity and residual from solid body?
-            analyze_rotation       = 1
+            self.analyze_rotation       = 1
             # ...should I align such that rotation axis points to z-direction?
-            align_before_writing       = 1
+            self.align_before_writing       = 1
             # ...should I analyze data in co-rotating fram?
-            analysis_in_corotating_frame       = 1
+            self.analysis_in_corotating_frame       = 1
             # ... what kind of data should be written to vtk?
-            write_apical_polygonal_surface       = 1
-            write_basal_polygonal_surface       = 0
-            write_apical_triangulated_surface       = 1
-            write_basal_triangulated_surface       = 0
-            write_full_3D_triangulated_surface       = 0
-            write_polarity_field       = 1
-            write_nematic_field       = 1
+            self.write_apical_polygonal_surface       = 1
+            self.write_basal_polygonal_surface       = 0
+            self.write_apical_triangulated_surface       = 1
+            self.write_basal_triangulated_surface       = 0
+            self.write_full_3D_triangulated_surface       = 0
+            self.write_polarity_field       = 1
+            self.write_nematic_field       = 1
 
             # ==============================  model parameters     ===================================
             # ...the maximum l mode for vector spherical harmonics mode decomposition?
-            Lmax       = 4
+            self.Lmax       = 4
             # ... first frame number inside data_dir to be analyzed
-            first_frame       = 1
+            self.first_frame       = 1
             # ... last frame number inside data_dir to be analyzed
-            last_frame       = 100
+            self.last_frame       = 100
         
     def __init__(self,path):
         self.params = self.Params()
@@ -134,36 +141,20 @@ class vertex_model:
             # Create the directory
             os.makedirs(output_dir)
 
-        os.popen('[ -d'+self.repo_path+'/cpp/VertexModelOutput/ ] && rm -rf '+self.repo_path +
-                '/cpp/VertexModelOutput/* || mkdir -p '+self.repo_path+'/cpp/VertexModelOutput/')
-        cmd = [
-            "/bin/bash", "-c",
-            "../vertex_model3d_monolayer/organoid ../VertexModel.dat"
-        ]
-        try:
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=output_dir)
-            stdout, stderr = p.communicate()
-            # Check for errors
-            if p.returncode != 0:
-                print(f"Command failed with error code {p.returncode}")
-                if stderr:
-                    print(f"Error message: {stderr.decode('utf-8')}")
-            else:
-                # Split the output into lines and print the last two lines
-                output_lines = stdout.decode('utf-8').splitlines()
-                print(output_lines[-2])
-                print(output_lines[-1])
-
-        except Exception as e:
-            print(f"Failed to run command: {e}")
-        return 
+        # organoid reads its input files relative to the working directory (output_dir)
+        executable = os.path.join(self.repo_path, 'cpp', 'vertex_model3d_monolayer', 'organoid')
+        require_binary(executable)
+        output_lines = run_backend([executable, '../VertexModel.dat'], cwd=output_dir)
+        # Print the timing lines written at the end of the run
+        print('\n'.join(output_lines[-2:]))
+        return
     
     def load_sim_data(self):
         output_dir = os.path.join(self.repo_path, 'cpp', 'VertexModelOutput')
         file_pattern = os.path.join(output_dir,"./outputAnalyze/apicaltri*.vtk")
-        vtk_files = glob.glob(file_pattern)
+        vtk_files = _sorted_frames(file_pattern)
         file_pattern2 = os.path.join(output_dir,"./outputAnalyze/polarity*.vtk")
-        vtk_files2 = glob.glob(file_pattern2)
+        vtk_files2 = _sorted_frames(file_pattern2)
 
         # Create a MultiBlock dataset
         self.multiblock = pv.MultiBlock()
@@ -191,32 +182,18 @@ class vertex_model:
             print("Please run the simulation first")
             return
 
-        cmd = [
-            "/bin/bash", "-c",
-            "../vertex_model3d_monolayer/accessories/analyze ../VertexModelAnalyze.dat -d ./output -o ./outputAnalyze"
-        ]
-        try:
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=output_dir)
-            stdout, stderr = p.communicate()
-            # Check for errors
-            if p.returncode != 0:
-                print(f"Command failed with error code {p.returncode}")
-                if stderr:
-                    print(f"Error message: {stderr.decode('utf-8')}")
-            else:
-                # Split the output into lines and print the last two lines
-                output_lines = stdout.decode('utf-8').splitlines()
-                print(output_lines[-2])
-                print(output_lines[-1])
+        executable = os.path.join(self.repo_path, 'cpp', 'vertex_model3d_monolayer', 'accessories', 'analyze')
+        require_binary(executable)
+        output_lines = run_backend([executable, '../VertexModelAnalyze.dat', '-d', './output', '-o', './outputAnalyze'],
+                                   cwd=output_dir)
+        # Print the last two lines of the output
+        print('\n'.join(output_lines[-2:]))
 
-        except Exception as e:
-            print(f"Failed to run command: {e}")
-        
         self.load_sim_data()
         return
 
     
-    def VizualizeIteration(self, iteration="0",edges=False):
+    def VizualizeIteration(self, iteration=0,edges=False):
         if self.multiblock is None:
             print("Please analyze the data first")
             return
@@ -248,7 +225,8 @@ class vertex_model:
             print("Please analyze the data first")
             return
         
-        plotter = pv.Plotter()
+        # The frames go to a file, so no window is needed (also works without a display)
+        plotter = pv.Plotter(off_screen=True)
         # Open a gif
         plotter.open_gif(gif_name)
 

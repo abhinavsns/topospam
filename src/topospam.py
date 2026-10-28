@@ -1,4 +1,14 @@
-import os,sys,subprocess
+import os
+
+from topospam_utils import BUILD_HINT
+
+# Executables built from cpp/ by `make backend` (or ./install.sh)
+BACKEND_BINARIES = [
+    'cpp/Active2d',
+    'cpp/SpringLattice',
+    'cpp/vertex_model3d_monolayer/organoid',
+    'cpp/vertex_model3d_monolayer/accessories/analyze',
+]
 
 def set_repo_path(path):
     """
@@ -8,7 +18,7 @@ def set_repo_path(path):
     - path (str): The path to the repository.
 
     Returns:
-    - bool: True if there's a cpp folder with a makefile inside, False otherwise.
+    - str: The absolute path of the repository, or None if it is not a TopoSPAM repository.
     """
     # Ensure the provided path exists
     if not os.path.exists(path):
@@ -29,14 +39,13 @@ def set_repo_path(path):
 
     print(f"Success: The path '{path}' contains the TopoSPAM repository.")
 
-    #Set the path to the LD_LIBRARY_PATH=($brew --prefix)/lib for lnux
-    #detect if we are on linux debian/fedora or ubuntu
+    missing = [b for b in BACKEND_BINARIES if not os.path.isfile(os.path.join(path, b))]
+    if missing:
+        print(f"Warning: the C++ backend has not been built yet (missing: {', '.join(missing)}).\n"
+              f"{BUILD_HINT}")
 
-    if sys.platform == "linux":
-        #run a shell command from python and get the output as string ($brew --prefix)/lib
-        brewpath = subprocess.check_output(['brew --prefix'], shell=True).decode('utf-8').strip()
-        os.environ['LD_LIBRARY_PATH'] = str(brewpath)+"/lib"
-    return path
+    # The simulators run their executables from other working directories
+    return os.path.abspath(path)
 
 from active_fluid_2d import *
 from spring_lattice import *

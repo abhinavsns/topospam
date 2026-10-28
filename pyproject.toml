@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,14 +11,33 @@ authors = [
 ]
 description = "A package to perform active matter simulations using OpenFPM."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: GPL-3.0",
-    "Operating System :: OS Independent",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
 ]
-dynamic = ["dependencies"]
+# The Python package drives the C++ simulators in cpp/, which are built separately
+# (./install.sh or `make backend`, see README.md).
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "vtk",
+    "IPython",
+    "ipywidgets",
+    "ipykernel",
+    "jupyter",
+    "pandas",
+    "scipy",
+    "networkx",
+    "imageio",
+    "pyvista[jupyter]",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/abhinavsns/topospam"
 "Bug Tracker" = "https://github.com/abhinavsns/topospam/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["topospam", "topospam_utils", "active_fluid_2d", "spring_lattice", "vertex_model", "mesh_methods"]

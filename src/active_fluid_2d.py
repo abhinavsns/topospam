@@ -7,6 +7,16 @@ from vtk.numpy_interface import dataset_adapter as dsa
 from IPython.display import HTML, display
 from ipywidgets import widgets, interact_manual, FloatProgress
 from matplotlib.animation import FuncAnimation
+from topospam_utils import animation_to_html, find_mpirun, require_binary, run_backend
+
+
+def _mpirun_command(nCores):
+    cmd = [find_mpirun(), "-np", str(nCores)]
+    if os.geteuid() == 0:  # e.g. a container started as root
+        cmd.append("--allow-run-as-root")
+    return cmd + ["../Active2d", "../active2d.csv"]
+
+
 class active_fluid_2d:
     class Params:
         def __init__(self):
@@ -53,34 +63,21 @@ class active_fluid_2d:
             # Create the directory
             os.makedirs(output_dir)
 
-        os.popen('[ -d'+self.repo_path+'/cpp/Active2dOutput/ ] && rm -rf '+self.repo_path +
-                '/cpp/Active2dOutput/* || mkdir -p '+self.repo_path+'/cpp/Active2dOutput/')
-        cmd = [
-            "/bin/bash", "-c",
-            "mpirun -np " +
-            str(nCores)+" ../Active2d ../active2d.csv"
-        ]
-        try:
-            p = subprocess.Popen(cmd, stdout=subprocess.PIPE, cwd=output_dir)
-            stdout, stderr = p.communicate()
-            # Check for errors
-            if p.returncode != 0:
-                print(f"Command failed with error code {p.returncode}")
-                if stderr:
-                    print(f"Error message: {stderr.decode('utf-8')}")
-            else:
-                # Split the output into lines and print the last two lines
-                output_lines = stdout.decode('utf-8').splitlines()
-                print(output_lines[-2])
-                print(output_lines[-1])
-
-        except Exception as e:
-            print(f"Failed to run command: {e}")
-        return int(output_lines[-1].split()[-1])
+        require_binary(os.path.join(self.repo_path, 'cpp', 'Active2d'))
+        output_lines = run_backend(_mpirun_command(nCores), cwd=output_dir)
+        # Print the timing and step-count lines written at the end of the run
+        summary = [line for line in output_lines
+                   if line.startswith(("The simulation took", "Total number of Time steps"))]
+        if not summary or not summary[-1].startswith("Total number of Time steps"):
+            raise RuntimeError("Active2d did not report the number of time steps. Last output:\n"
+                               + "\n".join(output_lines[-30:]))
+        for line in summary:
+            print(line)
+        return int(summary[-1].split()[-1])
 
 
     def RunSimulationWithProgress(self, nCores=1):
-        SimParams=self.params
+        SimParams=self.params.get()
         np.savetxt(self.repo_path+'/cpp/active2d.csv', SimParams, delimiter=' ')
         output_dir = os.path.join(self.repo_path, 'cpp', 'Active2dOutput')
         # Check if the directory exists
@@ -99,13 +96,9 @@ class active_fluid_2d:
             # Create the directory
             os.makedirs(output_dir)
         
-        cmd = [
-            "/bin/bash", "-c",
-            "mpirun -np " +
-            str(nCores)+" ../Active2d ../active2d.csv"
-        ]    
-        p = subprocess.Popen(cmd,
-                            stdout=subprocess.PIPE, cwd=self.repo_path+'/cpp/Active2dOutput', shell=True)
+        require_binary(os.path.join(self.repo_path, 'cpp', 'Active2d'))
+        p = subprocess.Popen(_mpirun_command(nCores),
+                            stdout=subprocess.PIPE, cwd=output_dir)
         f = FloatProgress(value=0.0, min=0.0, max=self.params.tf)  # instantiate the bar
         print("Simulation Progress (Based on current time value)")
         display(f)  # display the bar
@@ -113,11 +106,13 @@ class active_fluid_2d:
         outp = "0"
         for line in iter(p.stdout.readline, b''):
             outp = line.rstrip().decode('utf-8')
-            if (outp.split()[0] == "Total" or outp.split()[0] == "The"):
+            try:
+                f.value = float(outp)
+            except ValueError:
                 print(outp)
-            else:
-                f.value = float(line.rstrip().decode('utf-8'))
             ctr += 1
+        if p.wait() != 0:
+            raise RuntimeError(f"Active2d failed with exit code {p.returncode}")
         print("Simulation finished (reached t="+str(self.params.tf)+")")
         return int(outp.split()[-1])
 
@@ -133,6 +128,7 @@ class active_fluid_2d:
             self.repo_path+'/cpp/Active2dOutput/Polar_'+str(iteration)+'.pvtp')
         reader.Update()
         nodes = vtk_to_numpy(dsa.WrapDataObject(reader.GetOutput()).Points)
+        linecache.checkcache()  # the file is rewritten when the simulation is run again
         t = float(linecache.getline(self.repo_path+'/cpp/Active2dOutput/Polar_' +
                 str(iteration)+'.pvtp', 5, module_globals=None))
         Pol = vtk_to_numpy(
@@ -184,5 +180,5 @@ class active_fluid_2d:
             tittle.set_text("Time:"+str(round(t, 2)))
         anim = FuncAnimation(fig, animate, np.arange(
             1, finalStep, jump), interval=150)
-        display(HTML(anim.to_html5_video()))
+        display(HTML(animation_to_html(anim)))
         plt.close()
