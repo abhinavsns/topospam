@@ -4,7 +4,9 @@ MKDIR_P = mkdir -p
 
 # Compiler settings
 COMP = g++
-FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3
+# gnu++20 rather than c++20: in strict mode, conda's clang does not get INFINITY and NAN from
+# the math.h of the macOS 27 SDK
+FLAGS = -Wall -Wextra -Wpedantic -std=gnu++20 -O3
 comma := ,
 
 # GSL and Boost from a conda environment (pixi.toml) or from Homebrew
