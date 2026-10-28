@@ -16,12 +16,15 @@ notebook for each of them in [`examples/`](examples):
 | `SpringLattice.ipynb` | Spring lattice with spontaneous strain | `cpp/SpringLattice.cpp` (OpenFPM) |
 | `VertexModel.ipynb` | Active 3D vertex model of a monolayer | `cpp/vertex_model3d_monolayer` |
 
-There are two ways to run TopoSPAM:
+There are three ways to run TopoSPAM:
 
-* **Docker image (recommended)**: everything is installed and compiled already. Works on
-  Linux, macOS (Intel and Apple Silicon) and Windows.
-* **Native installation** on macOS or Linux with Homebrew: one script installs the
-  dependencies, compiles the simulators and creates a Python environment.
+* **Docker image (recommended to try the examples)**: everything is installed and compiled
+  already. Works on Linux, macOS (Intel and Apple Silicon) and Windows.
+* **Native installation with pixi (recommended to work with the code)**: one command installs
+  a locked environment with all dependencies, compiles the simulators and starts JupyterLab,
+  on macOS and Linux. Nothing is installed system-wide.
+* **Native installation with Homebrew**: a script installs the dependencies with Homebrew,
+  compiles the simulators and creates a Python environment.
 
 ## Option 1: Docker image (recommended)
 
@@ -58,14 +61,35 @@ Good to know:
 * To build the image yourself: `docker build -t topospam .` in this repository. On ARM64 this
   compiles OpenFPM from source, which takes a few minutes longer.
 
-## Option 2: Native installation (macOS and Linux)
+## Option 2: Native installation with pixi (macOS and Linux)
+
+[pixi](https://pixi.sh) installs the dependencies (compilers, MPI, OpenFPM, Python packages, ...)
+as conda packages into the folder `.pixi` of the repository, in exactly the versions recorded
+in `pixi.lock`. Homebrew is not needed.
+
+1. Install pixi: `curl -fsSL https://pixi.sh/install.sh | sh` (or `brew install pixi`), then
+   open a new terminal. On macOS, the Xcode Command Line Tools are needed as well
+   (`xcode-select --install`).
+2. Get TopoSPAM and start JupyterLab:
+   ```bash
+   git clone https://github.com/abhinavsns/topospam.git
+   cd topospam
+   pixi run lab
+   ```
+   The first run downloads the environment (a few GB) and compiles the simulators, which takes
+   a few minutes. Open the notebooks in `examples/`.
+
+`pixi run test` runs all simulators briefly to check the installation, and `pixi shell` opens
+a shell in the environment.
+
+## Option 3: Native installation with Homebrew (macOS and Linux)
 
 Prerequisites:
 
 * macOS: the Xcode Command Line Tools (`xcode-select --install`).
 * Linux: a C++ compiler and basic build tools, e.g. `sudo apt-get install build-essential procps curl file git`
   on Debian/Ubuntu. On a machine without a display (e.g. a server reached via SSH), also install
-  `libosmesa6` for the 3D plots and see [Troubleshooting](#troubleshooting-the-native-installation).
+  `libosmesa6` for the 3D plots and see [Troubleshooting](#troubleshooting-the-homebrew-installation).
 * [Homebrew](https://brew.sh). Follow the instructions at the end of its installation to add it
   to your `PATH`.
 
@@ -113,7 +137,9 @@ jupyter lab
 ### When do I need to recompile?
 
 * With the Docker image: never.
-* With the native installation: `make backend` (in the repository) compiles the C++ simulators.
+* With pixi: never by hand. `pixi run lab` and `pixi run test` first recompile whatever C++
+  code changed.
+* With the Homebrew installation: `make backend` (in the repository) compiles the C++ simulators.
   `install.sh` does this once. Run it again after you change C++ code (e.g. `cpp/Active2d.cpp`)
   and after `brew upgrade` updated OpenFPM's dependencies. Changes to the Python code need no
   recompilation (the package is installed in editable mode).
@@ -134,7 +160,7 @@ instead. `set_repo_path` also warns if the simulators have not been compiled yet
 The simulations write their output to `cpp/Active2dOutput`, `cpp/SpringLatticeOutput` and
 `cpp/VertexModelOutput`; each run replaces the output of the previous one.
 
-## Troubleshooting the native installation
+## Troubleshooting the Homebrew installation
 
 The installation relies on Homebrew, which changes over time. Some messages you may see:
 
@@ -158,7 +184,8 @@ The installation relies on Homebrew, which changes over time. Some messages you 
   than the ones VTK provides packages for (e.g. Python 3.15). Create the environment with Python
   3.13, as shown in step 3 above.
 * **`TopoSPAM backend executable not found`** when running a simulation: the simulators have
-  not been compiled. Run `make backend` in the repository (or `./install.sh`).
+  not been compiled. Run `make backend` in the repository (or `./install.sh`; with pixi,
+  `pixi run build`).
 * **`mpirun was not found`**: Homebrew's `bin` directory is not on the `PATH` of the program
   that started Jupyter. Start Jupyter from a terminal in which `brew` works.
 * **`Error: Too many files open`** during the Homebrew installation: run the installation again,
