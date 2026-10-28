@@ -1,0 +1,49 @@
+# Everything TopoSPAM needs, as conda packages: OpenFPM from its channel
+# (https://github.com/abhinavsns/homebrew-openfpm), everything else from conda-forge.
+# With pixi (https://pixi.sh) installed:
+#
+#   pixi run lab     installs the environment, compiles the simulators and starts JupyterLab
+#   pixi run test    installs the environment, compiles the simulators and runs them briefly
+#
+# pixi.lock records the exact version of every package, so the environment can be recreated
+# identically later and on other machines.
+
+[workspace]
+name = "topospam"
+channels = ["https://abhinavsns.github.io/homebrew-openfpm", "conda-forge"]
+platforms = ["osx-arm64", "osx-64", "linux-64", "linux-aarch64"]
+
+[dependencies]
+# C++ simulators
+openfpm = "5.0.1.*"
+openmpi-mpicxx = "*"
+cxx-compiler = "*"
+make = "*"
+gsl = "*"
+# Python package and notebooks
+python = "3.13.*"
+numpy = "*"
+pandas = "*"
+matplotlib-base = "*"
+scipy = "*"
+networkx = "*"
+imageio = "*"
+vtk = "*"
+pyvista = "*"
+trame-pyvista = "*"
+ipywidgets = "*"
+ipykernel = "*"
+jupyter = "*"
+jupyterlab = "*"
+jupyter-server-proxy = "*"
+nest-asyncio2 = "*"
+nbconvert = "*"
+ffmpeg = "*"
+
+[pypi-dependencies]
+topospam = { path = ".", editable = true }
+
+[tasks]
+build = { cmd = "make backend", description = "Compile the C++ simulators" }
+test = { cmd = "python tests/smoke_test.py --quick", depends-on = ["build"], description = "Run every simulator briefly" }
+lab = { cmd = "jupyter lab", depends-on = ["build"], description = "Start JupyterLab; the notebooks are in examples/" }

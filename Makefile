@@ -1,5 +1,5 @@
-# Builds the TopoSPAM C++ simulators. Their dependencies (OpenFPM and friends from Homebrew)
-# have to be installed first: ./install.sh does both, see README.md.
+# Builds the TopoSPAM C++ simulators. Their dependencies (OpenFPM and friends) come from the
+# pixi environment (`pixi run build` runs this) or from Homebrew (./install.sh), see README.md.
 #
 #   make backend                                build all simulators
 #   make backend ARCH_FLAGS=-march=x86-64-v2    portable binaries (e.g. for a Docker image)
@@ -9,7 +9,8 @@
 
 # On Linux, Homebrew installs its own glibc when the system one is older than its bottles need.
 # Programs linked against Homebrew's libraries must then be built with Homebrew's GCC as well.
-ifeq ($(shell uname -s),Linux)
+# (Not in a conda environment, which brings its own compilers.)
+ifeq ($(shell uname -s)$(wildcard $(CONDA_PREFIX)/openfpm),Linux)
   BREW_PREFIX ?= $(shell brew --prefix 2>/dev/null)
   ifneq ($(wildcard $(BREW_PREFIX)/opt/glibc),)
     BREW_GXX := $(shell ls $(BREW_PREFIX)/bin/g++-[0-9]* 2>/dev/null | sort -V | tail -n 1)

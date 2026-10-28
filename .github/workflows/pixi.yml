@@ -1,0 +1,55 @@
+name: pixi environment
+
+# Installs the pixi environment (conda packages, including OpenFPM), compiles the simulators,
+# and runs the smoke test and all example notebooks on macOS and Linux. The weekly run checks
+# that the environment can still be installed.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '41 4 * * 2'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIXI_VERSION: v0.83.0
+
+jobs:
+  test:
+    name: pixi (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel, ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pixi
+        run: |
+          curl -fsSL https://pixi.sh/install.sh | bash
+          echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
+
+      - name: Off-screen rendering (the Linux runners have no display)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          echo "RUN_HEADLESS=xvfb-run -a" >> "$GITHUB_ENV"
+
+      - name: Compile the simulators and run the smoke test
+        run: $RUN_HEADLESS pixi run test
+
+      - name: Run the example notebooks
+        run: |
+          for notebook in examples/*.ipynb; do
+            echo "::group::$notebook"
+            $RUN_HEADLESS pixi run jupyter nbconvert --to notebook --execute \
+              --ExecutePreprocessor.timeout=3600 --output-dir /tmp/executed "$notebook"
+            echo "::endgroup::"
+          done

@@ -8,22 +8,32 @@ COMP = g++
 # Flags for compilation
 FLAGS = -Wall -Wextra -Wpedantic -std=c++20 -O3 -g
 
-# Homebrew dependencies. Any Boost works; prefer boost@1.85, which OpenFPM installs.
-BREW_PREFIX ?= $(shell brew --prefix)
-BOOST_PREFIX ?= $(firstword $(wildcard $(BREW_PREFIX)/opt/boost@1.85 $(BREW_PREFIX)/opt/boost))
-DEP_PREFIXES = $(BOOST_PREFIX) $(BREW_PREFIX)/opt/libomp $(BREW_PREFIX)/opt/gsl
+comma := ,
+
+# GSL and Boost from a conda environment (pixi.toml) or from Homebrew
+ifneq ($(wildcard $(CONDA_PREFIX)/include/gsl),)
+  COMP = $(CXX)
+  DEP_PREFIXES = $(CONDA_PREFIX)
+  # conda's libraries are found through the rpath, on macOS too
+  RPATH_DIRS = $(CONDA_PREFIX)/lib
+else
+  # Any Boost works; prefer boost@1.85, which OpenFPM installs.
+  BREW_PREFIX ?= $(shell brew --prefix)
+  BOOST_PREFIX ?= $(firstword $(wildcard $(BREW_PREFIX)/opt/boost@1.85 $(BREW_PREFIX)/opt/boost))
+  DEP_PREFIXES = $(BOOST_PREFIX) $(BREW_PREFIX)/opt/libomp $(BREW_PREFIX)/opt/gsl
+  EXTRA_INCS = -I/usr/local/include
+  EXTRA_LIBPATH = -L/usr/local/lib
+  # Homebrew's library directories are not on the Linux loader path (and boost@1.85 is keg-only)
+  ifeq ($(shell uname -s),Linux)
+    RPATH_DIRS = $(addsuffix /lib,$(DEP_PREFIXES))
+  endif
+endif
 
 # Include directories
-INCS = -I./src/ -I../src/ -I examples/ -I $(OUT_DIR) -I../src/eigen-3.4.0 $(addprefix -I,$(addsuffix /include,$(DEP_PREFIXES))) -I/usr/local/include
+INCS = -I./src/ -I../src/ -I examples/ -I $(OUT_DIR) -I../src/eigen-3.4.0 $(addprefix -I,$(addsuffix /include,$(DEP_PREFIXES))) $(EXTRA_INCS)
 # Libraries and library paths
-LIBPATH = $(addprefix -L,$(addsuffix /lib,$(DEP_PREFIXES))) -L/usr/local/lib
+LIBPATH = $(addprefix -L,$(addsuffix /lib,$(DEP_PREFIXES))) $(EXTRA_LIBPATH) $(addprefix -Wl$(comma)-rpath$(comma),$(RPATH_DIRS))
 LIBS = -lgsl -lboost_iostreams -lboost_program_options -lgslcblas -lm
-
-# Homebrew's library directories are not on the Linux loader path (and boost@1.85 is keg-only)
-ifeq ($(shell uname -s),Linux)
-  comma := ,
-  LIBPATH += $(addprefix -Wl$(comma)-rpath$(comma),$(addsuffix /lib,$(DEP_PREFIXES)))
-endif
 
 # Header files
 HEADERS = ../src/tools.hpp
