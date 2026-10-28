@@ -35,6 +35,7 @@ cpp/Active2d
 cpp/SpringLattice
 cpp/vertex_model3d_monolayer/organoid
 cpp/vertex_model3d_monolayer/accessories/analyze
+*.dSYM/
 examples/*.gif
 *_env
 

@@ -203,3 +203,16 @@ Please check the issues of this repository and the troubleshooting section above
 run into a new problem, open an issue with the full error message and the output of
 `python tests/smoke_test.py`. The system configuration differs for everyone, so the
 installation may fail because of a dependency rather than TopoSPAM itself.
+
+## Keeping the installation working (for maintainers)
+
+* **pixi**: `pixi.lock` fixes every package, so the environment does not change by itself.
+  To move to newer packages, run `pixi update`, check them with `pixi run test`, and commit
+  `pixi.lock`. The workflow `pixi.yml` installs the locked environment and runs the smoke test
+  and all notebooks on macOS and Linux for every push and once a week.
+* **OpenFPM** comes as conda packages from the channel https://abhinavsns.github.io/homebrew-openfpm,
+  built from the recipes in the `conda/` folder of
+  [abhinavsns/homebrew-openfpm](https://github.com/abhinavsns/homebrew-openfpm) by its CI.
+* **Docker**: the workflow `main.yml` builds and tests the image and publishes it from `main`
+  as `latest`, and for a tag `vX.Y.Z` as `ghcr.io/abhinavsns/topospam:vX.Y.Z`. A tagged image
+  never changes, so cite a tag (e.g. in a paper) to point to a fixed version.
