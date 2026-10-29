@@ -1,0 +1,78 @@
+name: pixi environment
+
+# Installs the pixi environment (conda packages, including OpenFPM) from pixi.lock, compiles the
+# simulators, and runs the smoke test and all example notebooks on macOS and Linux. The weekly
+# run checks that the locked environment can still be installed.
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '41 4 * * 2'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIXI_VERSION: v0.83.0
+  # Use the environment of pixi.lock, which users get; fail if pixi.toml changed without it
+  PIXI_LOCKED: true
+
+jobs:
+  test:
+    name: pixi (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, macos-15-intel, ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install pixi
+        run: |
+          curl -fsSL https://pixi.sh/install.sh | bash
+          echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
+
+      # The Linux runners have no display. ubuntu-24.04 gets a virtual one, like a desktop;
+      # ubuntu-24.04-arm renders without, like a server reached via SSH.
+      - name: Virtual display
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          echo "WITH_DISPLAY=xvfb-run -a" >> "$GITHUB_ENV"
+
+      # bash sets pipefail, so tee does not hide failures
+      - name: Compile the simulators and run the smoke test
+        shell: bash
+        run: $WITH_DISPLAY pixi run test 2>&1 | tee test.log
+
+      - name: Run the example notebooks
+        shell: bash
+        run: |
+          for notebook in examples/*.ipynb; do
+            echo "::group::$notebook"
+            $WITH_DISPLAY pixi run jupyter nbconvert --to notebook --execute \
+              --ExecutePreprocessor.timeout=3600 --output-dir /tmp/executed "$notebook" 2>&1 | tee -a notebooks.log
+            echo "::endgroup::"
+          done
+
+      - name: Show the errors as annotations
+        if: failure()
+        # The job logs can only be downloaded with admin rights; annotations are public
+        run: |
+          python3 - <<'EOF'
+          import os, re
+          def annotate(title, chunk):
+              message = "\n".join(chunk).replace("%", "%25").replace("\r", "").replace("\n", "%0A")
+              print(f"::error title={title}::{message}")
+          for log in ["test.log", "notebooks.log"]:
+              if os.path.exists(log):
+                  lines = [re.sub(r"\x1b\[[0-9;]*m", "", l) for l in open(log, errors="replace").read().splitlines()]
+                  annotate(f"Error lines of {log}", [l for l in lines if re.search(r"error|fail|traceback|exception", l, re.I)][-40:])
+                  annotate(f"End of {log}", lines[-60:])
+          EOF

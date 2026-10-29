@@ -1,0 +1,27 @@
+# Keep the Docker build context to what the image needs
+.git
+.github
+.idea
+.vscode
+**/.DS_Store
+**/__pycache__
+**/.ipynb_checkpoints
+*.egg-info
+venv
+.venv
+*_env
+docker
+topospam.github.io
+Only_local
+
+# Build products and simulation output of a local installation
+**/*.o
+**/*.gch
+cpp/Active2d
+cpp/SpringLattice
+cpp/vertex_model3d_monolayer/organoid
+cpp/vertex_model3d_monolayer/accessories/analyze
+cpp/*Output
+cpp/*.csv
+cpp/*.dat
+examples/*.gif

@@ -11,7 +11,6 @@ import shutil
 import csv
 
 import matplotlib
-matplotlib.use('Agg') # Must be before importing matplotlib.pyplot or pylab!
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.path as mpath
@@ -768,7 +767,7 @@ def save_files_for_cpp(balls_df, springs_df, path, spring_columns, part_columns)
     """
     
     #make neighbour_lengths dataframe and populate the 'neighbours' column with a list of neighbours for each ball
-    neigh_lengths = pd.DataFrame(index=balls_df['ID'], columns=['neighbours'] + spring_columns)
+    neigh_lengths = pd.DataFrame(index=balls_df['ID'], columns=['neighbours'] + spring_columns, dtype=object)
     neigh_lengths['neighbours'] = balls_df['neighbours']
 
     for ball in balls_df['ID']:  
@@ -777,7 +776,8 @@ def save_files_for_cpp(balls_df, springs_df, path, spring_columns, part_columns)
         cp['neighbour'] = np.where(cp['ball1'] != ball, cp['ball1'], cp['ball2'])
 
         for column in spring_columns:
-            neigh_lengths[column][ball] = cp.set_index('neighbour').loc[balls_df['neighbours'][ball]][column].values
+            # .at writes into the frame itself (chained assignment is a no-op with pandas copy-on-write)
+            neigh_lengths.at[ball, column] = cp.set_index('neighbour').loc[balls_df['neighbours'][ball]][column].values
         
     for column in ['neighbours'] + spring_columns:
         neighb_list = neigh_lengths[column].values.tolist()
@@ -1725,15 +1725,17 @@ def poisson_mesh(dim, r, layers, thickness, k, ns, mass=1, shape='square', borde
 
 
 def update_springs(springs, ball_positions, compute_lo=False):
+    # Whole-column assignment: the columns may be stored as integers, and pandas >= 3 does not
+    # upcast them in place (springs.loc[:, cols] = ... raises a TypeError)
     springs_ball1s = ball_positions.loc[pd.Series.tolist(springs.ball1)]
     springs_ball1s.columns = ['x1', 'y1', 'z1']
     springs_ball1s.reset_index(drop=True, inplace=True)
-    springs.loc[:, ['x1', 'y1', 'z1']] = springs_ball1s
+    springs[['x1', 'y1', 'z1']] = springs_ball1s
 
     springs_ball2s = ball_positions.loc[pd.Series.tolist(springs.ball2)]
     springs_ball2s.columns = ['x2', 'y2', 'z2']
     springs_ball2s.reset_index(drop=True, inplace=True)
-    springs.loc[:, ['x2', 'y2', 'z2']] = springs_ball2s
+    springs[['x2', 'y2', 'z2']] = springs_ball2s
 
     # change the l1 and dls for the springs
     springs_ball1s.columns = ['x', 'y', 'z']

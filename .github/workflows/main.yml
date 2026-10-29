@@ -1,87 +1,144 @@
-name: Build, Test, and Publish
+name: Docker image
 
+# Builds the Docker image natively for amd64 and arm64, runs the smoke test (part of the build)
+# and all example notebooks in it, and publishes it to ghcr.io from the main branch and tags.
 on:
   push:
     branches:
       - main
+    tags:
+      - 'v*'
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
-  test:
-    needs: docker-publish
-    runs-on: ${{ matrix.os }}
+  build:
+    name: Build and test (${{ matrix.platform }})
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-latest, macos-13]
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    # OpenFPM is compiled from source for arm64 (the Homebrew tap only has amd64 bottles)
+    timeout-minutes: 300
+    permissions:
+      contents: read
+      packages: write
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.8'
-    
-    - name: Set up Homebrew
-      uses: Homebrew/actions/setup-homebrew@master    
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Create and activate virtual environment
-      run: |
-        python3 -m venv venv
-        source venv/bin/activate
+      - name: Build the image (runs tests/smoke_test.py --quick)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          load: true
+          tags: topospam:test
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
-    - name: Install dependencies
-      run: |
-        source venv/bin/activate
-        pip3 install . -v
+      - name: Run the example notebooks
+        run: |
+          docker run --rm topospam:test bash -c '
+            set -e
+            for notebook in examples/*.ipynb; do
+              echo "::group::$notebook"
+              jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=3600 --output-dir /tmp/executed "$notebook"
+              echo "::endgroup::"
+            done'
 
-    - name: Test the package
-      run: |
-        source venv/bin/activate
-        #pytest to come
+      - name: Log in to the GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.Docker || secrets.GITHUB_TOKEN }}
 
-  docker-publish:
-    runs-on: ubuntu-latest  # Docker actions are run on Linux
+      - name: Push the image by digest
+        if: github.event_name != 'pull_request'
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          outputs: type=image,name=${{ env.IMAGE }},push-by-digest=true,name-canonical=true,push=true
+
+      - name: Export the digest
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.push.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload the digest
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: Publish multi-platform image
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 2
-    - name: Check version changes
-      run: |
-        echo $(git diff HEAD~1 HEAD -- ./version) >> ./version  
+      - name: Download the digests
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
 
-    - name: Verify Changed files
-      uses: tj-actions/verify-changed-files@v20
-      id: verify-changed-files
-      with:
-        files: |
-          ./version
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Set up Docker Buildx
-      if: steps.verify-changed-files.outputs.files_changed == 'true'
-      uses: docker/setup-buildx-action@v1
+      - name: Image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
+            type=sha
 
-    - name: Login to GitHub Container Registry
-      if: steps.verify-changed-files.outputs.files_changed == 'true'
-      uses: docker/login-action@v2
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.Docker }}
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.Docker || secrets.GITHUB_TOKEN }}
 
-    - name: Build and push Docker image
-      if: steps.verify-changed-files.outputs.files_changed == 'true'
-      uses: docker/build-push-action@v2
-      with:
-        context: .
-        file: ./Dockerfile
-        push: true
-        platforms: linux/amd64
-        tags: ghcr.io/${{ github.repository }}:latest
+      - name: Create the manifest list and push it
+        working-directory: /tmp/digests
+        run: |
+          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
+            $(printf '${{ env.IMAGE }}@sha256:%s ' *)
 
-    - name: Verify the Docker image
-      if: steps.verify-changed-files.outputs.files_changed == 'true'
-      run: |
-        docker pull ghcr.io/${{ github.repository }}:latest
-        docker run ghcr.io/${{ github.repository }}:latest
+      - name: Inspect the image
+        run: docker buildx imagetools inspect ${{ env.IMAGE }}:${{ steps.meta.outputs.version }}

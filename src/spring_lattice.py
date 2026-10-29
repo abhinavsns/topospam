@@ -1,12 +1,14 @@
 import os
 import glob
 import pickle
+import shutil
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML, display
 from mesh_methods import *
+from topospam_utils import animation_to_html, require_binary, run_backend
 
 class spring_lattice:
     class Params:
@@ -27,11 +29,11 @@ class spring_lattice:
         if self.params.mesh_geometry == "square":
             if thick_mesh_file is None:
                 thick_mesh_file = os.path.join(
-                    self.repo_path, "examples/meshe_utils_spring_lattice/square.pkl")
+                    self.repo_path, "examples/mesh_utils_spring_lattice/square.pkl")
             # replace the line below to either create a mesh or read a mesh
             [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
-            # setting thickness
-            balls_df["z"][len(balls_df)//2:] = self.params.thickness
+            # setting thickness of the top layer (second half of the balls)
+            balls_df.iloc[len(balls_df)//2:, balls_df.columns.get_loc("z")] = self.params.thickness
             # offsetting the mesh so that it starts from y = 0
             balls_df["y"] = balls_df["y"] - balls_df["y"].min()
             # update springs
@@ -39,9 +41,12 @@ class spring_lattice:
 
         else:
             thick_mesh_file = self.params.mesh_geometry
+            if not os.path.isabs(thick_mesh_file) and not os.path.exists(thick_mesh_file):
+                # the meshes of the examples are given relative to the examples folder
+                thick_mesh_file = os.path.join(self.repo_path, "examples", thick_mesh_file)
             [balls_df, springs_df] = pickle.load(open(thick_mesh_file, 'rb'))
-            # setting thickness
-            balls_df["z"][len(balls_df)//2:] = self.params.thickness
+            # setting thickness of the top layer (second half of the balls)
+            balls_df.iloc[len(balls_df)//2:, balls_df.columns.get_loc("z")] = self.params.thickness
             # if any of the balls have x = 0 then offset by small amount
             ind = balls_df[balls_df["x"] == 0].index
             balls_df.loc[ind, "x"] = 0.00001
@@ -180,10 +185,13 @@ class spring_lattice:
     def RunSimulation(self,dt=0.01, tol=1e-6, csv_t_save=500):
         dirname = self.repo_path+'/cpp/SpringLatticeOutput/'
         bin_dir = self.repo_path+'/cpp/'
+        require_binary(bin_dir + 'SpringLattice')
 
         os.makedirs(dirname, exist_ok=True)
         os.makedirs(dirname+'runfiles/', exist_ok=True)
         os.makedirs(dirname+'sim_output/', exist_ok=True)
+        # frames of a previous run would otherwise end up in this run's animation
+        shutil.rmtree(dirname+'files/', ignore_errors=True)
 
         [balls_df, springs_df] = initialize_cpp_simulation(
             self.params.balls, self.params.springs, dt=dt, csv_t_save=csv_t_save, tol=tol, path=dirname)
@@ -193,8 +201,7 @@ class spring_lattice:
         #    shutil.copy(bin_dir + file, dirname)
 
         # running the simulation
-        os.system("cd " + dirname +
-                " && ../SpringLattice")
+        run_backend([bin_dir + 'SpringLattice'], cwd=dirname, stream=True)
         print('$$$$ Exit OpenFPM $$$$')
 
         # access the output files
@@ -211,9 +218,8 @@ class spring_lattice:
         #get all csv starting with pattern Spring_0_*.csv
         dirname = self.repo_path+'/cpp/SpringLatticeOutput/files/'
         file_list = glob.glob(dirname + 'Spring_0_*.csv')
-        file_list = np.sort(file_list)
-        #extract timepoints from filenames using pattern Spring_0_<timepoint>.csv
-        timepoints = np.array([int(os.path.basename(f).replace('Spring_0_', '').replace('.csv', '')) for f in file_list])
+        #extract timepoints from filenames using pattern Spring_0_<timepoint>.csv (sorted numerically)
+        timepoints = np.sort(np.array([int(os.path.basename(f).replace('Spring_0_', '').replace('.csv', '')) for f in file_list]))
 
         fig, ax = plt.subplots(figsize=(8,8))
         
@@ -288,5 +294,5 @@ class spring_lattice:
 
         anim = FuncAnimation(fig, animate, frames=timepoints, interval=150, blit=True)
         
-        display(HTML(anim.to_html5_video()))
+        display(HTML(animation_to_html(anim)))
         plt.close(fig)
