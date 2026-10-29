@@ -19,9 +19,9 @@ ifneq ($(wildcard $(CONDA_PREFIX)/include/gsl),)
   # conda's libraries are found through the rpath, on macOS too
   RPATH_DIRS = $(CONDA_PREFIX)/lib
 else
-  # Any Boost works; prefer boost@1.85, which OpenFPM installs.
+  # Any Boost works; prefer the one OpenFPM installs (boost, or boost@1.85 for older OpenFPM).
   BREW_PREFIX ?= $(shell brew --prefix)
-  BOOST_PREFIX ?= $(firstword $(wildcard $(BREW_PREFIX)/opt/boost@1.85 $(BREW_PREFIX)/opt/boost))
+  BOOST_PREFIX ?= $(firstword $(wildcard $(BREW_PREFIX)/opt/boost $(BREW_PREFIX)/opt/boost@1.85))
   DEP_PREFIXES = $(BOOST_PREFIX) $(BREW_PREFIX)/opt/libomp $(BREW_PREFIX)/opt/gsl
   EXTRA_INCS = -I/usr/local/include
   EXTRA_LIBPATH = -L/usr/local/lib

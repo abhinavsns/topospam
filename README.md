@@ -93,6 +93,10 @@ Prerequisites:
 * [Homebrew](https://brew.sh). Follow the instructions at the end of its installation to add it
   to your `PATH`.
 
+Homebrew provides OpenFPM and its dependencies precompiled for Apple Silicon Macs (macOS 15 or
+newer) and for Linux. On Intel Macs it compiles all of them from source, which takes hours: use
+the Docker image or pixi there.
+
 Then run:
 
 ```bash
@@ -134,6 +138,10 @@ source topospam_env/bin/activate
 jupyter lab
 ```
 
+To update an existing Homebrew installation, e.g. one that stopped working after `brew upgrade`,
+run `brew update`, `brew upgrade abhinavsns/homebrew-openfpm/openfpm` and then `make clean backend`
+in the repository.
+
 ### When do I need to recompile?
 
 * With the Docker image: never.
@@ -166,8 +174,9 @@ The installation relies on Homebrew, which changes over time. Some messages you 
 
 * **`Refusing to load formula abhinavsns/openfpm/openfpm from untrusted tap`**: recent Homebrew
   versions require trusting third-party taps. Run `brew trust abhinavsns/openfpm`.
-* **`boost@1.85 has been deprecated ... It was disabled on 2026-04-05`**: this warning is
-  harmless. OpenFPM 5.0.1 requires Boost 1.85, which Homebrew still installs as its dependency.
+* **`boost@1.85 has been disabled`**: your OpenFPM formula is older than 5.0.1_1, which uses
+  Homebrew's current Boost and is built against the current versions of its dependencies. Update
+  it as described at the end of the installation steps above.
 * **`'EIGEN_GNUC_AT' ...` or other errors in `EMatrix.hpp`**: OpenFPM 5.0.1 does not compile with
   Eigen 5, which Homebrew's `eigen` provides since late 2025. Run `brew install eigen@3`;
   `make backend` uses it automatically.

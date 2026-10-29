@@ -25,8 +25,10 @@ else
   endif
   OPT := $(BREW_PREFIX)/opt
   OPENFPM_PREFIX ?= $(OPT)/openfpm
+  # OpenFPM's formula uses Homebrew's boost (before its revision 5.0.1_1: boost@1.85)
+  BOOST := $(notdir $(firstword $(wildcard $(OPT)/boost $(OPT)/boost@1.85)))
   # Formulae that provide headers and libraries
-  DEPS := petsc metis parmetis libhilbert boost@1.85 vc blitz algoim suite-sparse libomp hdf5-mpi
+  DEPS := petsc metis parmetis libhilbert $(BOOST) vc blitz algoim suite-sparse libomp hdf5-mpi
   DEP_INCLUDE_DIRS := $(wildcard $(addsuffix /include,$(addprefix $(OPT)/,$(DEPS))))
   DEP_LIB_DIRS := $(wildcard $(addsuffix /lib,$(addprefix $(OPT)/,$(DEPS))))
   # OpenFPM 5.0.1 does not compile with Eigen 5 (Homebrew's "eigen" since late 2025): use eigen@3 if present
